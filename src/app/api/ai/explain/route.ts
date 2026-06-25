@@ -73,13 +73,18 @@ export async function POST(req: NextRequest) {
       typeof question.subject === 'object' && question.subject
         ? (question.subject as { name?: string }).name
         : null
+    const examDoc =
+      typeof question.exam === 'object' && question.exam
+        ? (question.exam as { code?: string; name?: string })
+        : null
+    const examLabel = examDoc?.code ?? examDoc?.name ?? 'this exam'
     const options = Array.isArray(question.options)
       ? (question.options as Array<{ text?: string }>).map((o) => o.text ?? '').filter(Boolean)
       : []
 
     // ── Generate the explanation ───────────────────────────────────────────
     const explanation = await explainQuestion({
-      exam: String(question.exam),
+      exam: examLabel,
       subject,
       topic: (question as { topic?: string }).topic ?? null,
       questionText: String(question.questionText),

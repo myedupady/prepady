@@ -1,21 +1,17 @@
 import Link from 'next/link'
+import { getPayload } from 'payload'
+import configPromise from '@payload-config'
 import {
-  Brain,
-  Sparkles,
-  Timer,
-  GraduationCap,
-  WifiOff,
-  PenLine,
-  ArrowRight,
-  CheckCircle2,
-  ListChecks,
-  Target,
-  Globe2,
+  Brain, Sparkles, Timer, GraduationCap, WifiOff, PenLine,
+  ArrowRight, CheckCircle2, ListChecks, Target, Globe2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { SampleQuiz } from '@/components/SampleQuiz'
-import { EXAMS, REGIONS, examsByRegion } from '@/lib/exams'
+import { EXAMS, examsByRegion } from '@/lib/exams'
+import { hexToRgba } from '@/lib/color'
+
+export const dynamic = 'force-dynamic'
 
 const FEATURES = [
   { icon: Brain, title: 'Adaptive practice', desc: 'Questions adjust to your level in real time and flag the topics you keep missing.' },
@@ -32,10 +28,47 @@ const STEPS = [
   { icon: Sparkles, title: 'Let AI explain', desc: 'Tap “Explain this to me” on any question for a clear, step-by-step breakdown.' },
 ]
 
-const countryCount = new Set(EXAMS.map((e) => e.country)).size
+interface RegionView {
+  label: string
+  color: string
+  exams: { code: string }[]
+}
 
-export default function HomePage() {
-  const regions = examsByRegion()
+/** Load the exam catalogue from the DB; fall back to the static list if unavailable/empty. */
+async function loadCatalogue(): Promise<{ regions: RegionView[]; examCount: number; countryCount: number }> {
+  try {
+    const payload = await getPayload({ config: configPromise })
+    const [regionsRes, examsRes] = await Promise.all([
+      payload.find({ collection: 'regions', sort: 'order', limit: 100, depth: 0 }),
+      payload.find({ collection: 'exams', where: { status: { equals: 'active' } }, sort: 'order', limit: 1000, depth: 1 }),
+    ])
+    if (regionsRes.docs.length === 0) throw new Error('empty')
+    const exams = examsRes.docs as Array<{ code: string; country: string; region: { id: number } | number }>
+    const regions: RegionView[] = regionsRes.docs.map((r) => {
+      const region = r as { id: number; name: string; color: string }
+      return {
+        label: region.name,
+        color: region.color,
+        exams: exams
+          .filter((e) => (typeof e.region === 'object' ? e.region?.id : e.region) === region.id)
+          .map((e) => ({ code: e.code })),
+      }
+    })
+    return { regions, examCount: exams.length, countryCount: new Set(exams.map((e) => e.country)).size }
+  } catch {
+    const grouped = examsByRegion()
+    return {
+      regions: grouped.map((g) => ({ label: g.region.label, color: g.region.color, exams: g.exams.map((e) => ({ code: e.label })) })),
+      examCount: EXAMS.length,
+      countryCount: new Set(EXAMS.map((e) => e.country)).size,
+    }
+  }
+}
+
+const chip = (color: string) => ({ backgroundColor: hexToRgba(color, 0.13), color })
+
+export default async function HomePage() {
+  const { regions, examCount, countryCount } = await loadCatalogue()
 
   return (
     <main className="min-h-screen bg-background">
@@ -74,7 +107,7 @@ export default function HomePage() {
           </h1>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto mb-8">
             Adaptive practice, real past questions, and an AI tutor that explains every answer —
-            for {EXAMS.length} national exams across {countryCount}+ countries.
+            for {examCount} national exams across {countryCount}+ countries.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Button size="xl" variant="accent" asChild className="rounded-2xl font-black">
@@ -84,11 +117,10 @@ export default function HomePage() {
               <Link href="#exams">Find your exam</Link>
             </Button>
           </div>
-          {/* Region pills */}
           <div className="flex flex-wrap gap-2 justify-center mt-10">
-            {REGIONS.map((r) => (
-              <span key={r.value} className={`inline-flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-full ${r.pill}`}>
-                <span className={`w-2 h-2 rounded-full ${r.dot}`} />
+            {regions.map((r) => (
+              <span key={r.label} className="inline-flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-full" style={chip(r.color)}>
+                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: r.color }} />
                 {r.label}
               </span>
             ))}
@@ -103,28 +135,28 @@ export default function HomePage() {
             <p className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-widest text-gold-700 mb-2">
               <Globe2 className="w-4 h-4" /> Built for the whole continent
             </p>
-            <h2 className="font-display text-3xl font-extrabold text-ink-900">{EXAMS.length} exams · {countryCount}+ countries · 6 regions</h2>
+            <h2 className="font-display text-3xl font-extrabold text-ink-900">{examCount} exams · {countryCount}+ countries · {regions.length} regions</h2>
             <p className="text-muted-foreground mt-2 max-w-2xl mx-auto">From WAEC and JAMB to KCSE, Matric, ZIMSEC and the Baccalauréat — find your exam.</p>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {regions.map(({ region, exams }) => (
-              <div key={region.value} className="rounded-2xl border border-border bg-background p-6">
+            {regions.map((region) => (
+              <div key={region.label} className="rounded-2xl border border-border bg-background p-6">
                 <div className="flex items-center justify-between mb-4">
                   <span className="inline-flex items-center gap-2 font-black text-ink-900">
-                    <span className={`w-2.5 h-2.5 rounded-full ${region.dot}`} />
+                    <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: region.color }} />
                     {region.label}
                   </span>
-                  <span className="text-xs font-bold text-muted-foreground">{exams.length} exams</span>
+                  <span className="text-xs font-bold text-muted-foreground">{region.exams.length} exams</span>
                 </div>
                 <div className="flex flex-wrap gap-1.5">
-                  {exams.slice(0, 6).map((e) => (
-                    <span key={e.value} className={`text-xs font-semibold px-2.5 py-1 rounded-full ${region.pill}`}>
-                      {e.label}
+                  {region.exams.slice(0, 6).map((e) => (
+                    <span key={e.code} className="text-xs font-semibold px-2.5 py-1 rounded-full" style={chip(region.color)}>
+                      {e.code}
                     </span>
                   ))}
-                  {exams.length > 6 && (
+                  {region.exams.length > 6 && (
                     <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-muted text-muted-foreground">
-                      +{exams.length - 6} more
+                      +{region.exams.length - 6} more
                     </span>
                   )}
                 </div>
@@ -170,9 +202,7 @@ export default function HomePage() {
       <section className="max-w-6xl mx-auto px-6 py-20">
         <div className="text-center mb-12">
           <h2 className="font-display text-3xl font-extrabold text-ink-900 mb-3">Everything you need to score higher</h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            Adaptive testing, real past questions, and an AI explanation layer on every question.
-          </p>
+          <p className="text-muted-foreground max-w-2xl mx-auto">Adaptive testing, real past questions, and an AI explanation layer on every question.</p>
         </div>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {FEATURES.map(({ icon: Icon, title, desc, soon }) => (
@@ -184,9 +214,7 @@ export default function HomePage() {
                 <h3 className="font-black text-ink-900 mb-1 flex items-center gap-2">
                   {title}
                   {soon && (
-                    <span className="text-[10px] font-black uppercase tracking-wide text-gold-800 bg-gold-100 px-2 py-0.5 rounded-full">
-                      Soon
-                    </span>
+                    <span className="text-[10px] font-black uppercase tracking-wide text-gold-800 bg-gold-100 px-2 py-0.5 rounded-full">Soon</span>
                   )}
                 </h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">{desc}</p>
@@ -207,33 +235,25 @@ export default function HomePage() {
                 <p className="text-muted-foreground text-sm mb-5">Get started, no card needed.</p>
                 <ul className="space-y-2 text-sm text-ink-700">
                   {['Daily adaptive practice', '5 AI explanations per day', 'Past-question samples'].map((t) => (
-                    <li key={t} className="flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-gold-600" /> {t}
-                    </li>
+                    <li key={t} className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-gold-600" /> {t}</li>
                   ))}
                 </ul>
               </CardContent>
             </Card>
             <Card className="relative border-2 border-gold-400 bg-background shadow-brand">
-              <span className="absolute -top-3 right-6 text-[10px] font-black uppercase tracking-widest text-ink-950 bg-gold-400 px-3 py-1 rounded-full">
-                Most popular
-              </span>
+              <span className="absolute -top-3 right-6 text-[10px] font-black uppercase tracking-widest text-ink-950 bg-gold-400 px-3 py-1 rounded-full">Most popular</span>
               <CardContent className="p-7">
                 <p className="font-black text-ink-900 text-lg">Premium</p>
                 <p className="text-muted-foreground text-sm mb-5">For serious exam season.</p>
                 <ul className="space-y-2 text-sm text-ink-700">
                   {['Unlimited AI explanations', 'Full timed CBT mocks', 'AI essay marking', 'Full past-question bank'].map((t) => (
-                    <li key={t} className="flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-gold-600" /> {t}
-                    </li>
+                    <li key={t} className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-gold-600" /> {t}</li>
                   ))}
                 </ul>
               </CardContent>
             </Card>
           </div>
-          <p className="text-center text-muted-foreground text-xs mt-6">
-            Monthly, termly and exam-season bundles, priced for each market.
-          </p>
+          <p className="text-center text-muted-foreground text-xs mt-6">Monthly, termly and exam-season bundles, priced for each market.</p>
         </div>
       </section>
 

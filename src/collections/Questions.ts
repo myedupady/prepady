@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload'
-import { EXAMS, DIFFICULTIES } from '@/lib/exams'
+import { DIFFICULTIES } from '@/lib/exams'
 
 /**
  * The question bank — past questions + practice items across WAEC/NECO/JAMB/etc.
@@ -23,11 +23,11 @@ export const Questions: CollectionConfig = {
     // ── Classification (sidebar) ──────────────────────────────────────────
     {
       name: 'exam',
-      type: 'select',
+      type: 'relationship',
+      relationTo: 'exams',
       required: true,
       label: 'Exam',
-      options: EXAMS.map((e) => ({ label: `${e.label} — ${e.country}`, value: e.value })),
-      admin: { position: 'sidebar', description: 'Which exam this question belongs to (region is derived automatically).' },
+      admin: { position: 'sidebar', description: 'Which exam this question belongs to (region is derived from it).' },
     },
     {
       name: 'subject',

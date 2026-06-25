@@ -7,9 +7,12 @@ import { fileURLToPath } from 'url'
 
 import { Users } from './collections/Users'
 import { Media } from './collections/Media'
+import { Regions } from './collections/Regions'
+import { Exams } from './collections/Exams'
 import { Subjects } from './collections/Subjects'
 import { Questions } from './collections/Questions'
 import { QuizSessions } from './collections/QuizSessions'
+import { Theme } from './globals/Theme'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -21,7 +24,8 @@ export default buildConfig({
       titleSuffix: '— Prepady Admin',
     },
   },
-  collections: [Users, Media, Subjects, Questions, QuizSessions],
+  collections: [Users, Media, Regions, Exams, Subjects, Questions, QuizSessions],
+  globals: [Theme],
   editor: lexicalEditor({}),
   secret: process.env.PAYLOAD_SECRET ?? '',
   typescript: {

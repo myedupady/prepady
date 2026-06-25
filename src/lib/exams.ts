@@ -13,18 +13,18 @@
 export interface Region {
   value: string
   label: string
-  /** Tailwind classes for this region's pastel pill + dot. */
-  pill: string
-  dot: string
+  /** Hex colour for this region's exam chips (admin-editable via the Regions collection). */
+  color: string
+  order: number
 }
 
 export const REGIONS: Region[] = [
-  { value: 'west-africa', label: 'West Africa', pill: 'bg-rose-100 text-rose-700', dot: 'bg-rose-500' },
-  { value: 'east-africa', label: 'East Africa', pill: 'bg-emerald-100 text-emerald-700', dot: 'bg-emerald-500' },
-  { value: 'southern-africa', label: 'Southern Africa', pill: 'bg-violet-100 text-violet-700', dot: 'bg-violet-500' },
-  { value: 'north-africa', label: 'North Africa', pill: 'bg-amber-100 text-amber-800', dot: 'bg-amber-500' },
-  { value: 'francophone', label: 'Francophone Africa', pill: 'bg-blue-100 text-blue-700', dot: 'bg-blue-500' },
-  { value: 'island-nations', label: 'Island Nations', pill: 'bg-sky-100 text-sky-700', dot: 'bg-sky-500' },
+  { value: 'west-africa', label: 'West Africa', color: '#E11D48', order: 1 },
+  { value: 'east-africa', label: 'East Africa', color: '#059669', order: 2 },
+  { value: 'southern-africa', label: 'Southern Africa', color: '#7C3AED', order: 3 },
+  { value: 'north-africa', label: 'North Africa', color: '#D97706', order: 4 },
+  { value: 'francophone', label: 'Francophone Africa', color: '#2563EB', order: 5 },
+  { value: 'island-nations', label: 'Island Nations', color: '#0284C7', order: 6 },
 ]
 
 export type RegionValue = (typeof REGIONS)[number]['value']
@@ -134,10 +134,10 @@ export function examsByRegion(): { region: Region; exams: Exam[] }[] {
   }))
 }
 
-/** The pastel pill classes for whichever region an exam belongs to. */
-export function examPill(examValue: string): string {
+/** The hex colour for whichever region an exam belongs to. */
+export function regionColor(examValue: string): string {
   const exam = EXAMS.find((e) => e.value === examValue)
-  return exam ? REGION_BY_VALUE[exam.region]?.pill ?? '' : ''
+  return (exam && REGION_BY_VALUE[exam.region]?.color) || '#6B7280'
 }
 
 /** Difficulty levels used by the adaptive engine. */
