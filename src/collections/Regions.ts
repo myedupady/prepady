@@ -1,8 +1,9 @@
 import type { CollectionBeforeValidateHook, CollectionConfig } from 'payload'
 import { slugify } from '@/lib/utils'
 
-const autoSlug: CollectionBeforeValidateHook = ({ data, operation }) => {
-  if ((operation === 'create' || !data?.slug) && data?.name) {
+const autoSlug: CollectionBeforeValidateHook = ({ data }) => {
+  // Only fill the slug when it's blank — never overwrite a provided one.
+  if (data && !data.slug && data.name) {
     data.slug = slugify(data.name as string)
   }
   return data
@@ -44,7 +45,10 @@ export const Regions: CollectionConfig = {
       required: true,
       defaultValue: '#2563EB',
       label: 'Chip Colour',
-      admin: { description: 'Hex colour for this region’s exam chips, e.g. #E11D48.' },
+      admin: {
+        description: 'Colour for this region’s exam chips.',
+        components: { Field: '/src/components/admin/ColorField.tsx#ColorField' },
+      },
     },
     {
       name: 'order',

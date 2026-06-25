@@ -6,7 +6,10 @@ const color = (name: string, label: string, defaultValue: string, description: s
   required: true,
   label,
   defaultValue,
-  admin: { description: `${description} — hex, e.g. ${defaultValue}.` },
+  admin: {
+    description: `${description} — hex, e.g. ${defaultValue}.`,
+    components: { Field: '/src/components/admin/ColorField.tsx#ColorField' },
+  },
 })
 
 /**

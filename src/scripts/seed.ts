@@ -14,10 +14,14 @@ async function run() {
   // ── Regions ───────────────────────────────────────────────────────────────
   const regionId: Record<string, number> = {}
   for (const r of REGIONS) {
-    const existing = await payload.find({ collection: 'regions', where: { slug: { equals: r.value } }, limit: 1 })
+    const existing = await payload.find({ collection: 'regions', where: { name: { equals: r.label } }, limit: 1 })
     if (existing.docs[0]) {
       regionId[r.value] = existing.docs[0].id as number
-      await payload.update({ collection: 'regions', id: existing.docs[0].id, data: { name: r.label, color: r.color, order: r.order } })
+      await payload.update({
+        collection: 'regions',
+        id: existing.docs[0].id,
+        data: { name: r.label, slug: existing.docs[0].slug, color: r.color, order: r.order },
+      })
     } else {
       const doc = await payload.create({ collection: 'regions', data: { name: r.label, slug: r.value, color: r.color, order: r.order } })
       regionId[r.value] = doc.id as number

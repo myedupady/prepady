@@ -21,7 +21,7 @@ export interface Region {
 export const REGIONS: Region[] = [
   { value: 'west-africa', label: 'West Africa', color: '#E11D48', order: 1 },
   { value: 'east-africa', label: 'East Africa', color: '#059669', order: 2 },
-  { value: 'southern-africa', label: 'Southern Africa', color: '#7C3AED', order: 3 },
+  { value: 'southern-africa', label: 'Southern Africa', color: '#0D9488', order: 3 },
   { value: 'north-africa', label: 'North Africa', color: '#D97706', order: 4 },
   { value: 'francophone', label: 'Francophone Africa', color: '#2563EB', order: 5 },
   { value: 'island-nations', label: 'Island Nations', color: '#0284C7', order: 6 },

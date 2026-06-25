@@ -4,6 +4,8 @@ import path from 'path'
 import { buildConfig } from 'payload'
 import sharp from 'sharp'
 import { fileURLToPath } from 'url'
+import { cloudStoragePlugin } from '@payloadcms/plugin-cloud-storage'
+import { createCloudinaryAdapter, createCloudinaryFileURL } from './lib/cloudinary-adapter'
 
 import { Users } from './collections/Users'
 import { Media } from './collections/Media'
@@ -17,7 +19,24 @@ import { Theme } from './globals/Theme'
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
+// Cloudinary (under a "prepady/" subfolder of the shared account) is used when
+// its credentials are present; otherwise media falls back to local-disk storage.
+const plugins = process.env.CLOUDINARY_CLOUD_NAME
+  ? [
+      cloudStoragePlugin({
+        collections: {
+          media: {
+            adapter: createCloudinaryAdapter({ folder: 'prepady' }),
+            generateFileURL: createCloudinaryFileURL('prepady'),
+            disableLocalStorage: true,
+          },
+        },
+      }),
+    ]
+  : []
+
 export default buildConfig({
+  plugins,
   admin: {
     user: Users.slug,
     meta: {
@@ -38,9 +57,8 @@ export default buildConfig({
     migrationDir: path.resolve(dirname, 'migrations'),
   }),
   sharp,
-  // Media uses Payload's local storage by default for the MVP.
-  // Swap in @payloadcms/plugin-cloud-storage (Cloudinary/S3/Vercel Blob) before
-  // production so uploads survive serverless cold starts — see README roadmap.
+  // Media → Cloudinary ("prepady/" folder) when CLOUDINARY_* creds are set
+  // (see `plugins` above); otherwise local-disk for zero-config dev.
   cors: [process.env.NEXT_PUBLIC_SERVER_URL ?? 'http://localhost:3000'].filter(Boolean),
   csrf: [process.env.NEXT_PUBLIC_SERVER_URL ?? 'http://localhost:3000'].filter(Boolean),
 })
