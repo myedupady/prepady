@@ -5,7 +5,7 @@
   "description": "Prepady — AI-powered adaptive exam-prep for WAEC, NECO, JAMB, Post-UTME, IGCSE & A-Level.",
   "scripts": {
     "dev": "next dev",
-    "build": "echo y | node -r ./src/scripts/patch-nextenv.cjs -r tsx/cjs node_modules/payload/bin.js migrate --yes && next build",
+    "build": "next build",
     "generate:types": "node -r ./src/scripts/patch-nextenv.cjs -r tsx/cjs node_modules/payload/bin.js generate:types",
     "generate:importmap": "node -r ./src/scripts/patch-nextenv.cjs -r tsx/cjs node_modules/payload/bin.js generate:importmap",
     "start": "next start",
