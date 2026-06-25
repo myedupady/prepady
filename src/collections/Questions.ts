@@ -26,8 +26,8 @@ export const Questions: CollectionConfig = {
       type: 'select',
       required: true,
       label: 'Exam',
-      options: EXAMS.map((e) => ({ label: e.label, value: e.value })),
-      admin: { position: 'sidebar' },
+      options: EXAMS.map((e) => ({ label: `${e.label} — ${e.country}`, value: e.value })),
+      admin: { position: 'sidebar', description: 'Which exam this question belongs to (region is derived automatically).' },
     },
     {
       name: 'subject',

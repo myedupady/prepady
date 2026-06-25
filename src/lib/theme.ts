@@ -1,107 +1,76 @@
 /**
  * PREPADY THEME REGISTER (programmatic mirror)
  * ============================================================================
- * The RUNTIME source of truth is `src/app/(frontend)/globals.css` (CSS vars),
- * which `tailwind.config.ts` maps to utility classes. Use Tailwind classes in
- * components — `bg-brand-600`, `text-gold-500`, `bg-card`, `border-border`, etc.
+ * RUNTIME source of truth: src/app/(frontend)/globals.css (CSS vars), mapped to
+ * Tailwind utilities in tailwind.config.ts. Use Tailwind classes in components
+ * — bg-ink-900, text-gold-500, bg-card, border-border, etc.
  *
- * This file mirrors those values for JS-only contexts that can't read Tailwind
- * classes: chart libraries (Recharts), <canvas>, dynamic inline styles, OG
- * images, emails. Values are HSL channel triplets identical to globals.css —
- * if you change a colour there, update it here too.
+ * This mirrors those values for JS-only contexts (charts, <canvas>, OG images,
+ * emails). HSL channel triplets, identical to globals.css — change a colour
+ * there and update it here too.
  *
- * Scheme: "Indigo & Gold" — premium, achievement-oriented, deliberately
- * distinct from any green/orange branding.
+ * Premium "warm" scheme (TopHat-inspired):
+ *   cream  → warm canvas        [background]
+ *   ink    → warm near-black     [primary buttons, text, dark sections]
+ *   gold   → amber accent        [CTAs, highlights]
+ *   region pastels → one per region (see REGION_TONES), for exam category chips.
  */
 
-/** Brand — deep indigo / violet (primary identity). */
-export const BRAND = {
-  50: '250 100% 97%',
-  100: '251 96% 93%',
-  200: '251 95% 87%',
-  300: '252 92% 78%',
-  400: '253 89% 70%',
-  500: '254 84% 63%',
-  600: '255 70% 55%', // primary
-  700: '256 58% 47%',
-  800: '257 53% 38%',
-  900: '256 46% 28%',
-  950: '257 50% 18%',
+/** Ink — warm near-blacks (primary + dark sections + text). */
+export const INK = {
+  50: '38 24% 95%', 100: '36 18% 88%', 200: '34 14% 78%', 300: '33 12% 64%',
+  400: '33 11% 49%', 500: '32 13% 37%', 600: '31 15% 27%', 700: '30 17% 19%',
+  800: '30 19% 14%', 900: '30 21% 10%', 950: '28 24% 6%',
 } as const
 
-/** Gold — warm amber accent (achievement / premium). */
+/** Gold — amber accent. */
 export const GOLD = {
-  50: '45 100% 96%',
-  100: '45 97% 88%',
-  200: '44 96% 77%',
-  300: '43 95% 66%',
-  400: '42 95% 56%',
-  500: '40 94% 49%', // accent
-  600: '35 92% 44%', // gold CTA
-  700: '30 85% 37%',
-  800: '27 75% 31%',
-  900: '25 68% 26%',
-  950: '24 72% 15%',
+  50: '42 80% 94%', 100: '41 85% 86%', 200: '40 88% 76%', 300: '38 90% 67%',
+  400: '36 90% 60%', 500: '34 86% 52%', 600: '30 82% 45%', 700: '27 78% 38%',
+  800: '25 70% 31%', 900: '24 64% 25%', 950: '24 66% 14%',
 } as const
 
-/** Neutral — cool slate (text & surfaces). */
-export const NEUTRAL = {
-  50: '210 40% 98%',
-  100: '214 32% 95%',
-  200: '213 27% 90%',
-  300: '213 20% 82%',
-  400: '215 16% 64%',
-  500: '215 16% 47%',
-  600: '215 19% 35%',
-  700: '215 25% 27%',
-  800: '217 33% 17%',
-  900: '222 47% 11%',
-  950: '229 53% 7%',
+/** Core semantic surfaces (light mode; see globals.css `.dark` for dark). */
+export const SURFACES = {
+  background: '41 38% 94%', // cream
+  foreground: '30 21% 10%', // ink
+  card: '44 46% 98%',
+  primary: '30 21% 10%', // ink
+  primaryForeground: '41 38% 96%',
+  border: '40 27% 85%',
+  ring: '36 88% 55%', // gold
 } as const
 
 /**
- * Semantic roles → the CSS variable each maps to. Read the live (theme-aware,
- * light/dark) value at runtime via `cssVar(name)`.
+ * One pastel tone per region (Tailwind built-in scales). Exam chips are coloured
+ * by their region — these literal class strings are the canonical mapping
+ * (kept in sync with REGIONS in src/lib/exams.ts).
  */
-export const SEMANTIC = {
-  background: '--background',
-  foreground: '--foreground',
-  card: '--card',
-  cardForeground: '--card-foreground',
-  primary: '--primary',
-  primaryForeground: '--primary-foreground',
-  secondary: '--secondary',
-  muted: '--muted',
-  mutedForeground: '--muted-foreground',
-  accent: '--accent',
-  border: '--border',
-  ring: '--ring',
-  destructive: '--destructive',
-  success: '--success',
-  warning: '--warning',
-  info: '--info',
-} as const
+export const REGION_TONES: Record<string, { pill: string; dot: string }> = {
+  'west-africa': { pill: 'bg-rose-100 text-rose-700', dot: 'bg-rose-500' },
+  'east-africa': { pill: 'bg-emerald-100 text-emerald-700', dot: 'bg-emerald-500' },
+  'southern-africa': { pill: 'bg-violet-100 text-violet-700', dot: 'bg-violet-500' },
+  'north-africa': { pill: 'bg-amber-100 text-amber-800', dot: 'bg-amber-500' },
+  francophone: { pill: 'bg-blue-100 text-blue-700', dot: 'bg-blue-500' },
+  'island-nations': { pill: 'bg-sky-100 text-sky-700', dot: 'bg-sky-500' },
+}
 
-/** Resolve a CSS variable to a usable color string, e.g. cssVar('--brand-600'). */
+/** Resolve a CSS variable to a usable colour string, e.g. cssVar('--ink-900'). */
 export const cssVar = (name: string) => `hsl(var(${name}))`
-
-/** Brand/gold/neutral shade as a live color string for JS consumers. */
-export const brand = (shade: keyof typeof BRAND) => cssVar(`--brand-${shade}`)
+export const ink = (shade: keyof typeof INK) => cssVar(`--ink-${shade}`)
 export const gold = (shade: keyof typeof GOLD) => cssVar(`--gold-${shade}`)
-export const neutral = (shade: keyof typeof NEUTRAL) => cssVar(`--neutral-${shade}`)
-
-/** Static `hsl(...)` string (theme-independent) — for OG images / emails where CSS vars don't resolve. */
+/** Static hsl() string (theme-independent) — for OG images / emails. */
 export const hsl = (triplet: string) => `hsl(${triplet})`
 
 /**
  * Usage cheat-sheet (Tailwind classes):
- *   Primary action      → bg-brand-600 hover:bg-brand-700 text-white
- *   Accent / highlight   → bg-gold-500 / text-gold-500
- *   Hero / dark sections → bg-brand-900 text-white
- *   Surfaces             → bg-background / bg-card / bg-muted
- *   Body text            → text-foreground ; secondary → text-muted-foreground
- *   Borders              → border-border ; focus ring → ring-ring
- *   States               → text-success / text-warning / text-destructive / text-info
+ *   Primary action   → bg-ink-900 text-primary-foreground  (or <Button>)
+ *   Accent / CTA      → bg-gold-400 text-ink-950  (variant="accent")
+ *   Canvas / surfaces → bg-background (cream) / bg-card / bg-muted
+ *   Dark sections     → bg-ink-950 text-ink-300
+ *   Body text         → text-foreground ; secondary → text-muted-foreground
+ *   Exam/region chip  → REGION_TONES[regionValue].pill
+ *   States            → text-success / text-warning / text-destructive
  */
-const theme = { BRAND, GOLD, NEUTRAL, SEMANTIC, cssVar, brand, gold, neutral, hsl }
+const theme = { INK, GOLD, SURFACES, REGION_TONES, cssVar, ink, gold, hsl }
 export default theme

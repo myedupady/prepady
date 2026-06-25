@@ -96,7 +96,7 @@ export function SampleQuiz() {
         </p>
         <button
           onClick={restart}
-          className="inline-flex items-center gap-2 text-brand font-semibold text-sm hover:text-brand-700"
+          className="inline-flex items-center gap-2 text-ink-900 font-semibold text-sm hover:text-ink-700"
         >
           <RotateCcw className="w-4 h-4" /> Try again
         </button>
@@ -107,8 +107,8 @@ export function SampleQuiz() {
   return (
     <div className="rounded-3xl border border-gray-100 bg-white shadow-brand p-6 sm:p-8">
       <div className="flex items-center justify-between mb-4">
-        <span className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-widest text-brand">
-          <span className="rounded-full bg-brand-50 px-2.5 py-1">{q.exam}</span>
+        <span className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-widest text-ink-500">
+          <span className="rounded-full bg-gold-100 text-gold-800 px-2.5 py-1">{q.exam}</span>
           <span className="text-gray-400">{q.subject}</span>
         </span>
         <span className="text-xs font-semibold text-gray-400">
@@ -122,7 +122,7 @@ export function SampleQuiz() {
         {q.options.map((opt, oi) => {
           const isPicked = picked === opt
           const isAnswer = opt === q.answer
-          let cls = 'border-gray-200 hover:border-brand hover:bg-brand-50/40 text-gray-700'
+          let cls = 'border-gray-200 hover:border-ink-900 hover:bg-ink-50 text-gray-700'
           if (answered) {
             if (isAnswer) cls = 'border-success bg-success/10 text-gray-900'
             else if (isPicked) cls = 'border-destructive bg-destructive/10 text-gray-900'
@@ -162,8 +162,8 @@ export function SampleQuiz() {
               <Sparkles className="w-4 h-4" /> Explain this to me
             </Button>
           ) : (
-            <div className="rounded-2xl bg-brand-50/70 border border-brand-100 p-4">
-              <p className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-brand mb-2">
+            <div className="rounded-2xl bg-gold-50 border border-gold-200 p-4">
+              <p className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-gold-700 mb-2">
                 <Sparkles className="w-3.5 h-3.5" /> AI tutor
               </p>
               <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">{q.explanation}</p>

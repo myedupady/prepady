@@ -32,8 +32,9 @@ const config: Config = {
     extend: {
       colors: {
         // ── Brand scales ──────────────────────────────────────────────────
+        ink: { DEFAULT: withAlpha('--ink-900'), ...scale('ink') },
+        gold: { DEFAULT: withAlpha('--gold-400'), ...scale('gold') },
         brand: { DEFAULT: withAlpha('--brand-600'), ...scale('brand') },
-        gold: { DEFAULT: withAlpha('--gold-500'), ...scale('gold') },
         // ── Semantic (shadcn-style) tokens ──────────────────────────────────
         background: withAlpha('--background'),
         foreground: withAlpha('--foreground'),
@@ -53,8 +54,8 @@ const config: Config = {
       },
       fontFamily: {
         sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
-        heading: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
-        display: ['Fraunces', 'Georgia', 'serif'],
+        heading: ['"Bricolage Grotesque"', '"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+        display: ['"Bricolage Grotesque"', 'system-ui', 'sans-serif'],
       },
       borderRadius: {
         lg: 'var(--radius)',
@@ -62,9 +63,9 @@ const config: Config = {
         sm: 'calc(var(--radius) - 4px)',
       },
       boxShadow: {
-        // Soft, premium elevation tinted with the brand hue
-        brand: '0 10px 30px -12px hsl(var(--brand-600) / 0.35)',
-        'brand-lg': '0 24px 60px -20px hsl(var(--brand-700) / 0.45)',
+        // Soft, premium elevation tinted warm (used via shadow-brand / -lg)
+        brand: '0 12px 32px -14px hsl(var(--ink-900) / 0.18)',
+        'brand-lg': '0 24px 60px -22px hsl(var(--ink-900) / 0.22)',
       },
       keyframes: {
         'accordion-down': { from: { height: '0' }, to: { height: 'var(--radix-accordion-content-height)' } },

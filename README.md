@@ -1,8 +1,10 @@
 # Prepady
 
-**AI-powered adaptive exam prep for WAEC, NECO, JAMB, Post-UTME, IGCSE & A-Level.**
+**AI-powered adaptive exam prep for Africa — 60+ national exams across 30+ countries** (WAEC, NECO, JAMB, KCSE, Matric, ZIMSEC, the Baccalauréat and many more — see `src/lib/exams.ts`).
 
 Prepady is the "EduCore — Adaptive Learning Engine" product: adaptive practice tests, a real past-questions bank, and an AI layer that explains every question. Built on the same proven stack as Myedupady (Next.js 15 + Payload CMS 3 + Postgres), with Claude added as the AI tutor.
+
+Design: a warm, premium "Indigo & Gold"-replaced **cream / ink / gold** palette with a soft pastel tone per region — all driven from one token register (`globals.css` → `tailwind.config.ts` → `theme.ts`).
 
 ---
 

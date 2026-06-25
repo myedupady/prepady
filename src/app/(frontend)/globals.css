@@ -1,17 +1,18 @@
 /* ============================================================================
  * PREPADY COLOUR REGISTER — single source of truth
  * ----------------------------------------------------------------------------
- * Premium scheme: "Indigo & Gold".
- *   brand  → deep indigo-violet (intelligence, focus, trust)   [primary]
- *   gold   → warm amber-gold    (achievement, success, premium) [accent]
- *   neutral → cool slate        (text & surfaces)
+ * Premium "warm" scheme (TopHat-inspired):
+ *   cream  → warm canvas              [background]
+ *   ink    → warm near-black          [primary buttons, text, dark sections]
+ *   gold   → amber accent             [CTAs, highlights]
+ *   region pastels (rose/emerald/violet/amber/blue/sky) live in Tailwind's
+ *   built-in scales and are documented in src/lib/exams.ts (one per region).
  *
- * Every value is an HSL channel triplet so Tailwind can apply opacity
- * (e.g. bg-brand-600/20). Change a colour HERE and the whole app follows —
- * tailwind.config.ts only maps names to these variables; components never
- * hardcode hex. A JS-readable mirror lives in src/lib/theme.ts.
+ * Values are HSL channel triplets so Tailwind can apply opacity (bg-ink-900/20).
+ * Change a colour HERE and the whole app follows; tailwind.config.ts only maps
+ * names to these variables. JS-readable mirror: src/lib/theme.ts.
  * ========================================================================== */
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -19,101 +20,100 @@
 
 @layer base {
   :root {
-    /* ── Brand — Indigo / Violet ─────────────────────────────────────────── */
+    /* ── Ink — warm near-blacks (primary + dark sections + text) ──────────── */
+    --ink-50: 38 24% 95%;
+    --ink-100: 36 18% 88%;
+    --ink-200: 34 14% 78%;
+    --ink-300: 33 12% 64%;
+    --ink-400: 33 11% 49%;
+    --ink-500: 32 13% 37%;
+    --ink-600: 31 15% 27%;
+    --ink-700: 30 17% 19%;
+    --ink-800: 30 19% 14%;
+    --ink-900: 30 21% 10%; /* primary ink */
+    --ink-950: 28 24% 6%;
+
+    /* ── Gold — amber accent ─────────────────────────────────────────────── */
+    --gold-50: 42 80% 94%;
+    --gold-100: 41 85% 86%;
+    --gold-200: 40 88% 76%;
+    --gold-300: 38 90% 67%;
+    --gold-400: 36 90% 60%; /* CTA gold (#F2A33C) */
+    --gold-500: 34 86% 52%;
+    --gold-600: 30 82% 45%;
+    --gold-700: 27 78% 38%;
+    --gold-800: 25 70% 31%;
+    --gold-900: 24 64% 25%;
+    --gold-950: 24 66% 14%;
+
+    /* ── Brand — indigo (kept as a minor accent / "info") ─────────────────── */
     --brand-50: 250 100% 97%;
     --brand-100: 251 96% 93%;
     --brand-200: 251 95% 87%;
     --brand-300: 252 92% 78%;
     --brand-400: 253 89% 70%;
     --brand-500: 254 84% 63%;
-    --brand-600: 255 70% 55%; /* primary */
+    --brand-600: 255 70% 55%;
     --brand-700: 256 58% 47%;
     --brand-800: 257 53% 38%;
-    --brand-900: 256 46% 28%; /* deep hero backgrounds */
+    --brand-900: 256 46% 28%;
     --brand-950: 257 50% 18%;
 
-    /* ── Gold — Amber accent ─────────────────────────────────────────────── */
-    --gold-50: 45 100% 96%;
-    --gold-100: 45 97% 88%;
-    --gold-200: 44 96% 77%;
-    --gold-300: 43 95% 66%;
-    --gold-400: 42 95% 56%;
-    --gold-500: 40 94% 49%; /* accent */
-    --gold-600: 35 92% 44%; /* gold CTA */
-    --gold-700: 30 85% 37%;
-    --gold-800: 27 75% 31%;
-    --gold-900: 25 68% 26%;
-    --gold-950: 24 72% 15%;
-
-    /* ── Neutral — Slate (reference; semantic tokens below point here) ─────── */
-    --neutral-50: 210 40% 98%;
-    --neutral-100: 214 32% 95%;
-    --neutral-200: 213 27% 90%;
-    --neutral-300: 213 20% 82%;
-    --neutral-400: 215 16% 64%;
-    --neutral-500: 215 16% 47%;
-    --neutral-600: 215 19% 35%;
-    --neutral-700: 215 25% 27%;
-    --neutral-800: 217 33% 17%;
-    --neutral-900: 222 47% 11%;
-    --neutral-950: 229 53% 7%;
-
-    /* ── Semantic surface tokens (light) ─────────────────────────────────── */
-    --background: 0 0% 100%;
-    --foreground: 222 47% 11%;
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-    --primary: 255 70% 55%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 214 32% 95%;
-    --secondary-foreground: 222 47% 11%;
-    --muted: 214 32% 95%;
-    --muted-foreground: 215 16% 47%;
-    --accent: 250 100% 97%; /* subtle brand-tinted hover surface */
-    --accent-foreground: 255 70% 40%;
-    --destructive: 0 72% 51%;
+    /* ── Semantic surface tokens (light / warm) ───────────────────────────── */
+    --background: 41 38% 94%;   /* cream #F6F2E9 */
+    --foreground: 30 21% 10%;   /* ink */
+    --card: 44 46% 98%;         /* near-white warm — content cards pop on cream */
+    --card-foreground: 30 21% 10%;
+    --popover: 44 46% 98%;
+    --popover-foreground: 30 21% 10%;
+    --primary: 30 21% 10%;      /* ink — primary buttons are near-black */
+    --primary-foreground: 41 38% 96%;
+    --secondary: 40 26% 88%;    /* warm sand */
+    --secondary-foreground: 30 21% 10%;
+    --muted: 41 30% 90%;
+    --muted-foreground: 33 12% 38%;
+    --accent: 42 33% 90%;       /* warm hover surface */
+    --accent-foreground: 30 21% 10%;
+    --destructive: 0 68% 50%;
     --destructive-foreground: 0 0% 100%;
-    --success: 142 71% 40%;
+    --success: 152 55% 38%;
     --success-foreground: 0 0% 100%;
-    --warning: 35 92% 44%;
-    --warning-foreground: 0 0% 100%;
+    --warning: 36 90% 44%;
+    --warning-foreground: 30 40% 12%;
     --info: 255 70% 55%;
     --info-foreground: 0 0% 100%;
-    --border: 213 27% 90%;
-    --input: 213 27% 90%;
-    --ring: 255 70% 55%;
-    --radius: 0.85rem;
+    --border: 40 27% 85%;       /* warm sand border */
+    --input: 40 27% 85%;
+    --ring: 36 88% 55%;         /* gold focus ring */
+    --radius: 0.9rem;
   }
 
   .dark {
-    /* Brand/gold/neutral scales are hue-stable; only surface tokens flip. */
-    --background: 257 40% 7%;
-    --foreground: 210 40% 98%;
-    --card: 257 38% 11%;
-    --card-foreground: 210 40% 98%;
-    --popover: 257 38% 11%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 254 84% 67%;
-    --primary-foreground: 257 50% 10%;
-    --secondary: 257 28% 18%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 257 26% 16%;
-    --muted-foreground: 215 20% 70%;
-    --accent: 257 30% 20%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 72% 55%;
+    --background: 30 22% 7%;    /* deep warm ink */
+    --foreground: 41 30% 94%;
+    --card: 30 20% 11%;
+    --card-foreground: 41 30% 94%;
+    --popover: 30 20% 11%;
+    --popover-foreground: 41 30% 94%;
+    --primary: 36 90% 60%;      /* gold reads as primary on dark */
+    --primary-foreground: 30 30% 8%;
+    --secondary: 30 16% 18%;
+    --secondary-foreground: 41 30% 94%;
+    --muted: 30 15% 16%;
+    --muted-foreground: 36 14% 68%;
+    --accent: 30 16% 18%;
+    --accent-foreground: 41 30% 94%;
+    --destructive: 0 68% 55%;
     --destructive-foreground: 0 0% 100%;
-    --success: 142 65% 45%;
+    --success: 152 50% 45%;
     --success-foreground: 0 0% 100%;
-    --warning: 38 92% 50%;
-    --warning-foreground: 257 50% 10%;
-    --info: 254 84% 67%;
-    --info-foreground: 257 50% 10%;
-    --border: 257 26% 20%;
-    --input: 257 26% 22%;
-    --ring: 254 84% 67%;
+    --warning: 38 90% 55%;
+    --warning-foreground: 30 40% 10%;
+    --info: 254 84% 70%;
+    --info-foreground: 0 0% 100%;
+    --border: 30 16% 20%;
+    --input: 30 16% 22%;
+    --ring: 36 90% 60%;
   }
 }
 
