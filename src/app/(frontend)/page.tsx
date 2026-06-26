@@ -86,11 +86,11 @@ export default async function HomePage() {
             <a href="#pricing" className="hover:text-ink-900 transition-colors">Pricing</a>
           </nav>
           <div className="flex items-center gap-3">
-            <Link href="/admin" className="hidden sm:block text-sm font-semibold text-muted-foreground hover:text-ink-900">
+            <Link href="/login" className="hidden sm:block text-sm font-semibold text-muted-foreground hover:text-ink-900">
               Log in
             </Link>
             <Button size="sm" variant="accent" asChild className="rounded-xl font-black">
-              <Link href="/admin">Start free</Link>
+              <Link href="/signup">Start free</Link>
             </Button>
           </div>
         </div>
@@ -263,7 +263,7 @@ export default async function HomePage() {
           <h2 className="font-display text-3xl md:text-4xl font-extrabold text-ink-950 mb-3">Ready to study smarter?</h2>
           <p className="text-ink-900/80 mb-8 max-w-xl mx-auto">Start practising free — upgrade when exam season heats up.</p>
           <Button size="xl" variant="default" asChild className="rounded-2xl font-black">
-            <Link href="/admin">Get started <ArrowRight className="w-5 h-5" /></Link>
+            <Link href="/signup">Get started <ArrowRight className="w-5 h-5" /></Link>
           </Button>
         </div>
       </section>

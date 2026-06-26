@@ -49,7 +49,7 @@ export const SURFACES = {
 export const REGION_TONES: Record<string, { pill: string; dot: string }> = {
   'west-africa': { pill: 'bg-rose-100 text-rose-700', dot: 'bg-rose-500' },
   'east-africa': { pill: 'bg-emerald-100 text-emerald-700', dot: 'bg-emerald-500' },
-  'southern-africa': { pill: 'bg-violet-100 text-violet-700', dot: 'bg-violet-500' },
+  'southern-africa': { pill: 'bg-teal-100 text-teal-700', dot: 'bg-teal-500' },
   'north-africa': { pill: 'bg-amber-100 text-amber-800', dot: 'bg-amber-500' },
   francophone: { pill: 'bg-blue-100 text-blue-700', dot: 'bg-blue-500' },
   'island-nations': { pill: 'bg-sky-100 text-sky-700', dot: 'bg-sky-500' },

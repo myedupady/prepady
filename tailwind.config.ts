@@ -34,7 +34,6 @@ const config: Config = {
         // ── Brand scales ──────────────────────────────────────────────────
         ink: { DEFAULT: withAlpha('--ink-900'), ...scale('ink') },
         gold: { DEFAULT: withAlpha('--gold-400'), ...scale('gold') },
-        brand: { DEFAULT: withAlpha('--brand-600'), ...scale('brand') },
         // ── Semantic (shadcn-style) tokens ──────────────────────────────────
         background: withAlpha('--background'),
         foreground: withAlpha('--foreground'),

@@ -46,19 +46,6 @@
     --gold-900: 24 64% 25%;
     --gold-950: 24 66% 14%;
 
-    /* ── Brand — indigo (kept as a minor accent / "info") ─────────────────── */
-    --brand-50: 250 100% 97%;
-    --brand-100: 251 96% 93%;
-    --brand-200: 251 95% 87%;
-    --brand-300: 252 92% 78%;
-    --brand-400: 253 89% 70%;
-    --brand-500: 254 84% 63%;
-    --brand-600: 255 70% 55%;
-    --brand-700: 256 58% 47%;
-    --brand-800: 257 53% 38%;
-    --brand-900: 256 46% 28%;
-    --brand-950: 257 50% 18%;
-
     /* ── Semantic surface tokens (light / warm) ───────────────────────────── */
     --background: 41 38% 94%;   /* cream #F6F2E9 */
     --foreground: 30 21% 10%;   /* ink */

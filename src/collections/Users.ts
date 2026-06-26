@@ -1,4 +1,16 @@
-import type { CollectionConfig } from 'payload'
+import type { CollectionBeforeChangeHook, CollectionConfig } from 'payload'
+
+/**
+ * Promote the very first user created to admin — avoids the chicken-and-egg
+ * where the /admin setup creates a user that can't then elevate itself.
+ */
+const promoteFirstUserToAdmin: CollectionBeforeChangeHook = async ({ data, operation, req }) => {
+  if (operation === 'create') {
+    const { totalDocs } = await req.payload.count({ collection: 'users' })
+    if (totalDocs === 0) data.role = 'admin'
+  }
+  return data
+}
 
 /**
  * Auth collection. Students self-register; `plan` + `subscriptionExpiresAt`
@@ -7,6 +19,7 @@ import type { CollectionConfig } from 'payload'
 export const Users: CollectionConfig = {
   slug: 'users',
   auth: true,
+  hooks: { beforeChange: [promoteFirstUserToAdmin] },
   admin: {
     useAsTitle: 'email',
     defaultColumns: ['name', 'email', 'role', 'plan', 'subscriptionExpiresAt'],
