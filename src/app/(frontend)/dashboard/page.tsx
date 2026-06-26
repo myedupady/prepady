@@ -107,11 +107,11 @@ export default async function DashboardPage() {
             <div>
               <h2 className="font-black text-ink-900 mb-1">Ready to practise?</h2>
               <p className="text-sm text-muted-foreground">
-                Adaptive quizzes and the AI tutor are launching shortly. Browse the exams you can prepare for.
+                Pick an exam and start an adaptive session — with an AI tutor on every question.
               </p>
             </div>
             <Button asChild variant="accent" className="rounded-xl font-black shrink-0">
-              <Link href="/#exams">Browse exams <ArrowRight className="w-4 h-4" /></Link>
+              <Link href="/quiz">Browse exams <ArrowRight className="w-4 h-4" /></Link>
             </Button>
           </CardContent>
         </Card>
@@ -125,7 +125,7 @@ export default async function DashboardPage() {
               <p className="font-bold text-ink-900 mb-1">No quizzes yet</p>
               <p className="text-sm text-muted-foreground mb-5">Your practice results and progress will show up here.</p>
               <Button asChild className="rounded-xl font-black">
-                <Link href="/#exams"><Globe2 className="w-4 h-4" /> Explore exams</Link>
+                <Link href="/quiz"><Globe2 className="w-4 h-4" /> Explore exams</Link>
               </Button>
             </CardContent>
           </Card>

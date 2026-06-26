@@ -63,6 +63,9 @@ export default function LoginPage() {
             <div>
               <label className="block text-sm font-semibold text-ink-900 mb-1.5">Password</label>
               <Input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" autoComplete="current-password" />
+              <div className="text-right mt-1.5">
+                <Link href="/forgot-password" className="text-xs font-semibold text-muted-foreground hover:text-gold-600">Forgot password?</Link>
+              </div>
             </div>
             <Button type="submit" disabled={loading} className="w-full rounded-xl font-black h-12">
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Log in'}

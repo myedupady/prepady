@@ -56,3 +56,26 @@ export function isPremium(user: {
 
 /** Free-tier daily AI explanation allowance. */
 export const FREE_DAILY_AI_LIMIT = 5
+
+export interface ClientQuestion {
+  id: number | string
+  questionText: string
+  options: { text: string }[]
+  difficulty: string | number
+  points: number
+  questionImageUrl?: string | null
+}
+
+/** Strip correctAnswer/explanation before sending a question to the client (anti-cheat). */
+export function sanitiseQuestion(q: Record<string, unknown>): ClientQuestion {
+  const img = q.questionImage as { url?: string } | null | undefined
+  const opts = Array.isArray(q.options) ? (q.options as Array<{ text?: string }>) : []
+  return {
+    id: q.id as number,
+    questionText: String(q.questionText ?? ''),
+    options: opts.map((o) => ({ text: o.text ?? '' })).filter((o) => o.text),
+    difficulty: (q.difficulty as string) ?? '2',
+    points: (q.maxMarks as number) ?? 1,
+    questionImageUrl: img?.url ?? null,
+  }
+}

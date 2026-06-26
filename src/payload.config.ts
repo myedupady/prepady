@@ -6,6 +6,7 @@ import sharp from 'sharp'
 import { fileURLToPath } from 'url'
 import { cloudStoragePlugin } from '@payloadcms/plugin-cloud-storage'
 import { createCloudinaryAdapter, createCloudinaryFileURL } from './lib/cloudinary-adapter'
+import { payloadEmailAdapter } from './lib/payload-email'
 
 import { Users } from './collections/Users'
 import { Media } from './collections/Media'
@@ -46,6 +47,7 @@ export default buildConfig({
   collections: [Users, Media, Regions, Exams, Subjects, Questions, QuizSessions],
   globals: [Theme],
   editor: lexicalEditor({}),
+  email: payloadEmailAdapter(),
   secret: process.env.PAYLOAD_SECRET ?? '',
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),
