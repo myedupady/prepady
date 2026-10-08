@@ -1,5 +1,6 @@
 import type { CollectionConfig } from 'payload'
 import { DIFFICULTIES } from '@/lib/exams'
+import { generateExplanationOnPublish } from './hooks/generateExplanation'
 
 /**
  * The question bank — past questions + practice items across WAEC/NECO/JAMB/etc.
@@ -12,6 +13,9 @@ export const Questions: CollectionConfig = {
     defaultColumns: ['questionText', 'exam', 'subject', 'topic', 'difficulty', 'status'],
     description: 'Past questions and practice items. MCQs are adaptive & auto-graded; theory questions are AI-marked.',
     listSearchableFields: ['questionText', 'topic'],
+  },
+  hooks: {
+    afterChange: [generateExplanationOnPublish],
   },
   access: {
     read: ({ req }) => !!req.user, // served to the quiz engine for logged-in students
@@ -37,10 +41,22 @@ export const Questions: CollectionConfig = {
       admin: { position: 'sidebar' },
     },
     {
+      name: 'topicRef',
+      type: 'relationship',
+      relationTo: 'topics',
+      label: 'Topic',
+      admin: {
+        position: 'sidebar',
+        description: 'Pick or create a Topic (under the matching Subject), e.g. "Quadratic Equations". Used for gap detection.',
+      },
+    },
+    {
+      // Legacy free-text topic, superseded by `topicRef`. Kept (hidden) so old
+      // rows keep their value and the migration stays non-destructive; readers
+      // fall back to it when a Topic relationship isn't set.
       name: 'topic',
       type: 'text',
-      label: 'Topic',
-      admin: { position: 'sidebar', description: 'e.g. "Quadratic Equations", "Photosynthesis". Used for gap detection.' },
+      admin: { hidden: true },
     },
     {
       name: 'difficulty',
@@ -137,7 +153,33 @@ export const Questions: CollectionConfig = {
       label: 'Explanation / Working',
       admin: {
         rows: 3,
-        description: 'Shown after answering. The AI "Explain this to me" feature falls back to / builds on this.',
+        description:
+          'Shown after answering (free to all students). Leave blank on a published MCQ and the AI will generate and store one automatically.',
+      },
+    },
+    {
+      name: 'explanationGeneratedBy',
+      type: 'text',
+      admin: {
+        readOnly: true,
+        position: 'sidebar',
+        description: 'Blank = written by an admin. "ai:<model>" = auto-generated. Clear the explanation to force a regenerate.',
+      },
+    },
+    {
+      name: 'videoSolutionUrl',
+      type: 'text',
+      label: 'Video Solution URL',
+      admin: { description: 'Optional YouTube/Vimeo link (unlisted is fine). Shown as the video solution.' },
+    },
+    {
+      name: 'sourceRef',
+      type: 'text',
+      label: 'Source Reference',
+      index: true,
+      admin: {
+        position: 'sidebar',
+        description: 'Stable ID for bulk import (idempotent re-import / dedup), e.g. "JAMB-2019-MTH-Q12".',
       },
     },
   ],

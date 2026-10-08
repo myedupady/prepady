@@ -1,7 +1,9 @@
 import type { Metadata } from 'next'
+import { unstable_cache } from 'next/cache'
 import { getPayload } from 'payload'
 import configPromise from '@payload-config'
 import { hexToHslTriplet } from '@/lib/color'
+import 'katex/dist/katex.min.css'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -16,7 +18,11 @@ export const metadata: Metadata = {
  * expect. Doubled `:root:root` selector guarantees these win over globals.css.
  * Falls back to no overrides (globals.css defaults) if the DB is unavailable.
  */
-async function getThemeCss(): Promise<string> {
+// Cache the theme for 5 minutes so a flood of page hits (incl. crawlers/bots)
+// doesn't trigger a DB round-trip each time. Admin theme edits appear within the
+// window; shorten or add revalidateTag('theme') on the Theme global to taste.
+const getThemeCss = unstable_cache(
+  async (): Promise<string> => {
   try {
     const payload = await getPayload({ config: configPromise })
     const t = (await payload.findGlobal({ slug: 'theme' })) as unknown as Record<string, string>
@@ -44,7 +50,10 @@ async function getThemeCss(): Promise<string> {
   } catch {
     return ''
   }
-}
+  },
+  ['theme-css'],
+  { revalidate: 300, tags: ['theme'] },
+)
 
 export default async function FrontendLayout({ children }: { children: React.ReactNode }) {
   const themeCss = await getThemeCss()

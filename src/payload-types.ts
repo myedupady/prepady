@@ -72,6 +72,7 @@ export interface Config {
     regions: Region;
     exams: Exam;
     subjects: Subject;
+    topics: Topic;
     questions: Question;
     'quiz-sessions': QuizSession;
     'payload-kv': PayloadKv;
@@ -86,6 +87,7 @@ export interface Config {
     regions: RegionsSelect<false> | RegionsSelect<true>;
     exams: ExamsSelect<false> | ExamsSelect<true>;
     subjects: SubjectsSelect<false> | SubjectsSelect<true>;
+    topics: TopicsSelect<false> | TopicsSelect<true>;
     questions: QuestionsSelect<false> | QuestionsSelect<true>;
     'quiz-sessions': QuizSessionsSelect<false> | QuizSessionsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -99,9 +101,11 @@ export interface Config {
   fallbackLocale: null;
   globals: {
     theme: Theme;
+    'ai-controls': AiControl;
   };
   globalsSelect: {
     theme: ThemeSelect<false> | ThemeSelect<true>;
+    'ai-controls': AiControlsSelect<false> | AiControlsSelect<true>;
   };
   locale: null;
   widgets: {
@@ -153,6 +157,17 @@ export interface User {
    */
   aiUsesToday?: number | null;
   aiUsesResetAt?: string | null;
+  /**
+   * Essays marked today. Resets daily; caps premium abuse.
+   */
+  markUsesToday?: number | null;
+  markUsesResetAt?: string | null;
+  /**
+   * Set when the user confirms their email. Admins can toggle manually.
+   */
+  emailVerified?: boolean | null;
+  emailVerifyToken?: string | null;
+  emailVerifyExpiry?: string | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -205,7 +220,7 @@ export interface Region {
    */
   slug: string;
   /**
-   * Hex colour for this region’s exam chips, e.g. #E11D48.
+   * Colour for this region’s exam chips.
    */
   color: string;
   /**
@@ -336,6 +351,34 @@ export interface Subject {
   createdAt: string;
 }
 /**
+ * Topics within a subject. Used for topic-by-topic practice and gap detection.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "topics".
+ */
+export interface Topic {
+  id: number;
+  name: string;
+  /**
+   * The subject this topic belongs to.
+   */
+  subject: number | Subject;
+  /**
+   * URL-safe — auto-generated from the name. Not unique across subjects.
+   */
+  slug?: string | null;
+  /**
+   * Optional short description of what this topic covers.
+   */
+  description?: string | null;
+  /**
+   * Lower numbers appear first.
+   */
+  order?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * Past questions and practice items. MCQs are adaptive & auto-graded; theory questions are AI-marked.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -349,8 +392,9 @@ export interface Question {
   exam: number | Exam;
   subject: number | Subject;
   /**
-   * e.g. "Quadratic Equations", "Photosynthesis". Used for gap detection.
+   * Pick or create a Topic (under the matching Subject), e.g. "Quadratic Equations". Used for gap detection.
    */
+  topicRef?: (number | null) | Topic;
   topic?: string | null;
   /**
    * Served adaptively: easy → medium → hard.
@@ -389,9 +433,21 @@ export interface Question {
    */
   maxMarks?: number | null;
   /**
-   * Shown after answering. The AI "Explain this to me" feature falls back to / builds on this.
+   * Shown after answering (free to all students). Leave blank on a published MCQ and the AI will generate and store one automatically.
    */
   explanation?: string | null;
+  /**
+   * Blank = written by an admin. "ai:<model>" = auto-generated. Clear the explanation to force a regenerate.
+   */
+  explanationGeneratedBy?: string | null;
+  /**
+   * Optional YouTube/Vimeo link (unlisted is fine). Shown as the video solution.
+   */
+  videoSolutionUrl?: string | null;
+  /**
+   * Stable ID for bulk import (idempotent re-import / dedup), e.g. "JAMB-2019-MTH-Q12".
+   */
+  sourceRef?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -504,6 +560,10 @@ export interface PayloadLockedDocument {
         value: number | Subject;
       } | null)
     | ({
+        relationTo: 'topics';
+        value: number | Topic;
+      } | null)
+    | ({
         relationTo: 'questions';
         value: number | Question;
       } | null)
@@ -565,6 +625,11 @@ export interface UsersSelect<T extends boolean = true> {
   paystackCustomerCode?: T;
   aiUsesToday?: T;
   aiUsesResetAt?: T;
+  markUsesToday?: T;
+  markUsesResetAt?: T;
+  emailVerified?: T;
+  emailVerifyToken?: T;
+  emailVerifyExpiry?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -640,11 +705,25 @@ export interface SubjectsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "topics_select".
+ */
+export interface TopicsSelect<T extends boolean = true> {
+  name?: T;
+  subject?: T;
+  slug?: T;
+  description?: T;
+  order?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "questions_select".
  */
 export interface QuestionsSelect<T extends boolean = true> {
   exam?: T;
   subject?: T;
+  topicRef?: T;
   topic?: T;
   difficulty?: T;
   year?: T;
@@ -662,6 +741,9 @@ export interface QuestionsSelect<T extends boolean = true> {
   markingScheme?: T;
   maxMarks?: T;
   explanation?: T;
+  explanationGeneratedBy?: T;
+  videoSolutionUrl?: T;
+  sourceRef?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -779,6 +861,49 @@ export interface Theme {
   createdAt?: string | null;
 }
 /**
+ * Controls and live spend for the AI tutor. Stored explanations are always free to students; these settings govern live generation, follow-ups, and essay marking.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ai-controls".
+ */
+export interface AiControl {
+  id: number;
+  controls?: {
+    /**
+     * Which AI provider serves live calls. Gemini is stubbed until a key + implementation are added.
+     */
+    provider?: ('anthropic' | 'gemini') | null;
+    /**
+     * When a question is published without an explanation, generate and store one automatically (one-time cost; then free to all students).
+     */
+    autoGenerateExplanations?: boolean | null;
+    /**
+     * Live AI calls are blocked once this month’s measured spend reaches this cap. Set 0 to disable the cap. Stored explanations keep serving regardless.
+     */
+    monthlyBudgetUsd?: number | null;
+    /**
+     * Emergency kill switch. Stored explanations still serve; no new live calls are made.
+     */
+    paused?: boolean | null;
+  };
+  /**
+   * Updated automatically after each live AI call.
+   */
+  usage?: {
+    /**
+     * UTC year-month the counters below cover.
+     */
+    currentMonth?: string | null;
+    spendUsd?: number | null;
+    explainCount?: number | null;
+    autoGeneratedCount?: number | null;
+    followupCount?: number | null;
+    markCount?: number | null;
+  };
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "theme_select".
  */
@@ -790,6 +915,33 @@ export interface ThemeSelect<T extends boolean = true> {
   accent?: T;
   card?: T;
   border?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ai-controls_select".
+ */
+export interface AiControlsSelect<T extends boolean = true> {
+  controls?:
+    | T
+    | {
+        provider?: T;
+        autoGenerateExplanations?: T;
+        monthlyBudgetUsd?: T;
+        paused?: T;
+      };
+  usage?:
+    | T
+    | {
+        currentMonth?: T;
+        spendUsd?: T;
+        explainCount?: T;
+        autoGeneratedCount?: T;
+        followupCount?: T;
+        markCount?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

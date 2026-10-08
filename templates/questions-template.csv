@@ -1,0 +1,4 @@
+type,exam,subject,topic,difficulty,year,question,optionA,optionB,optionC,optionD,optionE,correct,marking_scheme,max_marks,explanation,video_url,image,status,source_ref
+mcq,JAMB,Mathematics,Quadratic Equations,2,2019,"Solve for x: $x^2 - 5x + 6 = 0$.",x = 1 or 6,x = 2 or 3,x = -2 or -3,x = 0 or 5,,B,,1,,https://youtu.be/example,,draft,JAMB-2019-MTH-Q1
+mcq,WAEC,English Language,Vocabulary,1,,"Choose the word nearest in meaning to 'arduous'.",Easy,Difficult,Pleasant,Brief,,B,,1,'Arduous' means requiring great effort.,,,published,WAEC-ENG-VOC-1
+theory,WAEC,Biology,Photosynthesis,3,2021,Explain the process of photosynthesis and state its word equation.,,,,,,,"Award up to 5 marks: definition (1); light/chlorophyll/CO2/water as inputs (2); glucose + oxygen as outputs (1); correct word equation (1).",5,,,photosynthesis-diagram.png,draft,WAEC-2021-BIO-Q4

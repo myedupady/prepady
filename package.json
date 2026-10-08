@@ -13,26 +13,31 @@
     "payload": "payload",
     "migrate": "node -r ./src/scripts/patch-nextenv.cjs -r tsx/cjs node_modules/payload/bin.js migrate",
     "migrate:create": "node -r ./src/scripts/patch-nextenv.cjs -r tsx/cjs node_modules/payload/bin.js migrate:create",
-    "seed": "node -r ./src/scripts/patch-nextenv.cjs -r tsx/cjs src/scripts/seed.ts"
+    "seed": "node -r ./src/scripts/patch-nextenv.cjs -r tsx/cjs src/scripts/seed.ts",
+    "ai:explain": "node -r ./src/scripts/patch-nextenv.cjs -r tsx/cjs src/scripts/ai-explain.ts",
+    "import:questions": "node -r ./src/scripts/patch-nextenv.cjs -r tsx/cjs src/scripts/import-questions.ts",
+    "test:ai": "node --import tsx --test \"src/lib/ai/__tests__/**/*.test.ts\"",
+    "test:unit": "node --import tsx --test \"src/lib/**/__tests__/**/*.test.ts\""
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.69.0",
     "@payloadcms/db-postgres": "3.84.1",
-    "@payloadcms/plugin-cloud-storage": "3.84.1",
     "@payloadcms/next": "3.84.1",
+    "@payloadcms/plugin-cloud-storage": "3.84.1",
     "@payloadcms/richtext-lexical": "3.84.1",
     "@payloadcms/ui": "3.84.1",
     "@radix-ui/react-slot": "^1.1.0",
     "class-variance-authority": "^0.7.0",
-    "clsx": "^2.1.0",
     "cloudinary": "^2.10.0",
+    "clsx": "^2.1.0",
     "graphql": "^16.9.0",
+    "katex": "^0.19.0",
     "lucide-react": "^0.468.0",
     "next": "15.3.9",
     "payload": "3.84.1",
-    "resend": "^4.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "resend": "^4.0.0",
     "sharp": "^0.33.0",
     "tailwind-merge": "^2.5.0",
     "tailwindcss-animate": "^1.0.7"
@@ -45,6 +50,7 @@
     ]
   },
   "devDependencies": {
+    "@types/katex": "^0.16.8",
     "@types/node": "^20.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",

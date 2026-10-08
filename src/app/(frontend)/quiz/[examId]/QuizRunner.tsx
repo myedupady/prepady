@@ -6,6 +6,7 @@ import {
   GraduationCap, Sparkles, CheckCircle2, XCircle, ArrowRight, Loader2, RotateCcw, Lock,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { MathText } from '@/components/MathText'
 
 interface ClientQuestion {
   id: number | string
@@ -125,7 +126,10 @@ export function QuizRunner({ examId, examName, examFull, country }: { examId: st
           <Link href="/" className="flex items-center gap-2 font-display font-extrabold text-lg text-ink-900">
             <GraduationCap className="w-6 h-6 text-gold-500" /> Prepady<span className="text-gold-500">.</span>
           </Link>
-          <Link href="/quiz" className="text-sm font-semibold text-muted-foreground hover:text-ink-900">All exams</Link>
+          <div className="flex items-center gap-4">
+            <Link href={`/theory/${examId}`} className="text-sm font-semibold text-muted-foreground hover:text-ink-900">Theory</Link>
+            <Link href="/quiz" className="text-sm font-semibold text-muted-foreground hover:text-ink-900">All exams</Link>
+          </div>
         </div>
       </header>
       <div className="max-w-2xl mx-auto px-6 py-8">{children}</div>
@@ -190,7 +194,7 @@ export function QuizRunner({ examId, examName, examFull, country }: { examId: st
       </div>
 
       <div className="rounded-3xl border border-border bg-card shadow-brand p-6 sm:p-8">
-        <p className="text-lg font-bold text-ink-900 mb-5">{question.questionText}</p>
+        <p className="text-lg font-bold text-ink-900 mb-5"><MathText>{question.questionText}</MathText></p>
         <div className="space-y-2.5">
           {question.options.map((opt, oi) => {
             const isPicked = selected === opt.text
@@ -209,7 +213,7 @@ export function QuizRunner({ examId, examName, examFull, country }: { examId: st
                 onClick={() => setSelected(opt.text)}
                 className={`w-full flex items-center justify-between gap-3 text-left px-4 py-3 rounded-xl border-2 text-sm font-semibold transition-all disabled:cursor-default ${cls}`}
               >
-                <span><span className="text-gray-400 mr-2">{String.fromCharCode(65 + oi)}.</span>{opt.text}</span>
+                <span><span className="text-gray-400 mr-2">{String.fromCharCode(65 + oi)}.</span><MathText>{opt.text}</MathText></span>
                 {answered && isAnswer && <CheckCircle2 className="w-5 h-5 text-success shrink-0" />}
                 {answered && isPicked && !isAnswer && <XCircle className="w-5 h-5 text-destructive shrink-0" />}
               </button>
@@ -224,7 +228,7 @@ export function QuizRunner({ examId, examName, examFull, country }: { examId: st
         ) : (
           <div className="mt-6">
             <p className={`text-sm font-bold mb-3 ${result?.isCorrect ? 'text-success' : 'text-destructive'}`}>
-              {result?.isCorrect ? '✓ Correct!' : `Not quite — the answer is ${result?.correctAnswer}.`}
+              {result?.isCorrect ? '✓ Correct!' : <>Not quite — the answer is <MathText>{String(result?.correctAnswer ?? '')}</MathText>.</>}
             </p>
 
             {aiLocked ? (
@@ -237,7 +241,7 @@ export function QuizRunner({ examId, examName, examFull, country }: { examId: st
             ) : aiText ? (
               <div className="rounded-2xl bg-gold-50 border border-gold-200 p-4">
                 <p className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-gold-700 mb-2"><Sparkles className="w-3.5 h-3.5" /> AI tutor</p>
-                <p className="text-sm text-ink-900 leading-relaxed whitespace-pre-line">{aiText}</p>
+                <p className="text-sm text-ink-900 leading-relaxed"><MathText>{aiText}</MathText></p>
               </div>
             ) : (
               <Button onClick={explain} variant="outline" disabled={aiLoading} className="rounded-xl font-bold w-full sm:w-auto">

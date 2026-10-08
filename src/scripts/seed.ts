@@ -61,7 +61,7 @@ async function run() {
 
   // ── Subjects ────────────────────────────────────────────────────────────────
   const subjectId: Record<string, number> = {}
-  for (const name of ['Mathematics', 'English Language']) {
+  for (const name of ['Mathematics', 'English Language', 'Biology']) {
     const ex = await payload.find({ collection: 'subjects', where: { name: { equals: name } }, limit: 1 })
     if (ex.docs[0]) subjectId[name] = ex.docs[0].id as number
     else {
@@ -72,7 +72,27 @@ async function run() {
       subjectId[name] = d.id as number
     }
   }
-  console.log('Subjects: 2 ensured')
+  console.log(`Subjects: ${Object.keys(subjectId).length} ensured`)
+
+  // ── Topics (first-class; linked to a subject) ───────────────────────────────
+  const topicId: Record<string, number> = {} // key: `${subject}|${topic}`
+  async function ensureTopic(subjectName: string, topicName: string): Promise<number> {
+    const key = `${subjectName}|${topicName}`
+    if (topicId[key]) return topicId[key]
+    const sId = subjectId[subjectName]
+    const existing = await payload.find({
+      collection: 'topics',
+      where: { and: [{ name: { equals: topicName } }, { subject: { equals: sId } }] },
+      limit: 1,
+    })
+    if (existing.docs[0]) {
+      topicId[key] = existing.docs[0].id as number
+    } else {
+      const d = await payload.create({ collection: 'topics', data: { name: topicName, subject: sId } })
+      topicId[key] = d.id as number
+    }
+    return topicId[key]
+  }
 
   // ── Sample questions (so the CBT engine has content to serve) ─────────────────
   const SAMPLE: Array<{ exam: string; subject: string; q: string; opts: string[]; a: string; d: '1' | '2' | '3'; topic: string; exp: string }> = [
@@ -93,10 +113,12 @@ async function run() {
     const eId = examId[s.exam]
     const sId = subjectId[s.subject]
     if (!eId || !sId) continue
+    const tId = await ensureTopic(s.subject, s.topic)
     const ex = await payload.find({ collection: 'questions', where: { questionText: { equals: s.q } }, limit: 1 })
     const data = {
       exam: eId,
       subject: sId,
+      topicRef: tId,
       topic: s.topic,
       difficulty: s.d,
       questionType: 'mcq' as const,
@@ -116,6 +138,70 @@ async function run() {
     }
   }
   console.log(`Questions: ${qNew} created, ${qUpd} updated`)
+
+  // ── Sample theory questions (so AI essay marking has content to grade) ────────
+  const THEORY: Array<{ exam: string; subject: string; topic: string; d: '1' | '2' | '3'; q: string; scheme: string; marks: number }> = [
+    {
+      exam: 'waec',
+      subject: 'Biology',
+      topic: 'Photosynthesis',
+      d: '2',
+      q: 'State the word equation for photosynthesis and name two factors that affect its rate.',
+      scheme:
+        'Award up to 5 marks. Word equation: carbon dioxide + water -> glucose + oxygen (in the presence of light and chlorophyll) (3 marks: 1 for correct reactants, 1 for correct products, 1 for mentioning light/chlorophyll). Any TWO factors from: light intensity, carbon dioxide concentration, temperature, water availability (1 mark each, max 2).',
+      marks: 5,
+    },
+    {
+      exam: 'waec',
+      subject: 'English Language',
+      topic: 'Usage',
+      d: '2',
+      q: "Explain the difference between 'affect' and 'effect', giving one correct example sentence for each.",
+      scheme:
+        "Award up to 4 marks. 'Affect' is normally a verb meaning to influence (1 mark); correct example sentence using it as a verb (1 mark). 'Effect' is normally a noun meaning a result (1 mark); correct example sentence using it as a noun (1 mark).",
+      marks: 4,
+    },
+    {
+      exam: 'jamb',
+      subject: 'Mathematics',
+      topic: 'Simultaneous Equations',
+      d: '2',
+      q: 'Solve the simultaneous equations 2x + y = 7 and x - y = 2, showing your working.',
+      scheme:
+        'Award up to 4 marks. Valid method to eliminate a variable, e.g. adding the two equations to get 3x = 9 (2 marks for correct method/working). x = 3 (1 mark). y = 1 (1 mark). Full marks only if working is shown; answer alone earns 2 of 4.',
+      marks: 4,
+    },
+  ]
+  let tNew = 0
+  let tUpd = 0
+  for (const s of THEORY) {
+    const eId = examId[s.exam]
+    const sId = subjectId[s.subject]
+    if (!eId || !sId) continue
+    const tId = await ensureTopic(s.subject, s.topic)
+    const ex = await payload.find({ collection: 'questions', where: { questionText: { equals: s.q } }, limit: 1 })
+    const data = {
+      exam: eId,
+      subject: sId,
+      topicRef: tId,
+      topic: s.topic,
+      difficulty: s.d,
+      questionType: 'theory' as const,
+      status: 'published' as const,
+      maxMarks: s.marks,
+      questionText: s.q,
+      markingScheme: s.scheme,
+    }
+    if (ex.docs[0]) {
+      await payload.update({ collection: 'questions', id: ex.docs[0].id, data })
+      tUpd++
+    } else {
+      await payload.create({ collection: 'questions', data })
+      tNew++
+    }
+  }
+  console.log(`Theory questions: ${tNew} created, ${tUpd} updated`)
+
   console.log('✅ Seed complete')
   process.exit(0)
 }

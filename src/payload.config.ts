@@ -13,9 +13,11 @@ import { Media } from './collections/Media'
 import { Regions } from './collections/Regions'
 import { Exams } from './collections/Exams'
 import { Subjects } from './collections/Subjects'
+import { Topics } from './collections/Topics'
 import { Questions } from './collections/Questions'
 import { QuizSessions } from './collections/QuizSessions'
 import { Theme } from './globals/Theme'
+import { AIControls } from './globals/AIControls'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -44,8 +46,8 @@ export default buildConfig({
       titleSuffix: '— Prepady Admin',
     },
   },
-  collections: [Users, Media, Regions, Exams, Subjects, Questions, QuizSessions],
-  globals: [Theme],
+  collections: [Users, Media, Regions, Exams, Subjects, Topics, Questions, QuizSessions],
+  globals: [Theme, AIControls],
   editor: lexicalEditor({}),
   email: payloadEmailAdapter(),
   secret: process.env.PAYLOAD_SECRET ?? '',
@@ -57,6 +59,9 @@ export default buildConfig({
       connectionString: process.env.DATABASE_URI ?? '',
     },
     migrationDir: path.resolve(dirname, 'migrations'),
+    // Dev auto-syncs the schema (fast iteration); production applies committed
+    // migrations instead of pushing. Run `pnpm migrate` on deploy. See docs/DEPLOYMENT.md.
+    push: process.env.NODE_ENV !== 'production',
   }),
   sharp,
   // Media → Cloudinary ("prepady/" folder) when CLOUDINARY_* creds are set

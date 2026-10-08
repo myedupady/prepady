@@ -19,6 +19,10 @@ const promoteFirstUserToAdmin: CollectionBeforeChangeHook = async ({ data, opera
 export const Users: CollectionConfig = {
   slug: 'users',
   auth: {
+    // Brute-force protection: lock an account for 10 minutes after 10 failed
+    // logins. Pairs with the per-IP rate limiter in middleware.ts.
+    maxLoginAttempts: 10,
+    lockTime: 10 * 60 * 1000,
     forgotPassword: {
       generateEmailHTML: (args) => {
         const token = args?.token ?? ''
@@ -130,6 +134,42 @@ export const Users: CollectionConfig = {
       type: 'date',
       access: { update: ({ req }) => req.user?.role === 'admin' },
       admin: { position: 'sidebar', readOnly: true },
+    },
+    {
+      name: 'markUsesToday',
+      type: 'number',
+      defaultValue: 0,
+      access: { update: ({ req }) => req.user?.role === 'admin' },
+      admin: {
+        position: 'sidebar',
+        description: 'Essays marked today. Resets daily; caps premium abuse.',
+      },
+    },
+    {
+      name: 'markUsesResetAt',
+      type: 'date',
+      access: { update: ({ req }) => req.user?.role === 'admin' },
+      admin: { position: 'sidebar', readOnly: true },
+    },
+    // ── Email verification (gates live AI when AI_REQUIRE_VERIFIED_EMAIL=true) ──
+    {
+      name: 'emailVerified',
+      type: 'checkbox',
+      defaultValue: false,
+      access: { update: ({ req }) => req.user?.role === 'admin' },
+      admin: { position: 'sidebar', description: 'Set when the user confirms their email. Admins can toggle manually.' },
+    },
+    {
+      name: 'emailVerifyToken',
+      type: 'text',
+      access: { read: () => false, update: ({ req }) => req.user?.role === 'admin' },
+      admin: { hidden: true },
+    },
+    {
+      name: 'emailVerifyExpiry',
+      type: 'date',
+      access: { read: () => false, update: ({ req }) => req.user?.role === 'admin' },
+      admin: { hidden: true },
     },
   ],
 }

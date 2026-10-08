@@ -41,6 +41,18 @@ export function generateOrderNumber(): string {
   return `MED-${timestamp}-${random}`
 }
 
+/**
+ * Resolve the display name of a Payload relationship value, which may be a bare
+ * ID (unpopulated) or a populated doc. Returns null when no name is available.
+ */
+export function relName(value: unknown): string | null {
+  if (value && typeof value === 'object' && 'name' in value) {
+    const n = (value as { name?: unknown }).name
+    return typeof n === 'string' ? n : null
+  }
+  return null
+}
+
 /** Slugify a string */
 export function slugify(text: string): string {
   return text

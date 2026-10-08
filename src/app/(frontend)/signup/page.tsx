@@ -6,6 +6,7 @@ import { GraduationCap, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { GoogleSignInButton } from '@/components/GoogleSignInButton'
+import { Turnstile, TURNSTILE_ENABLED } from '@/components/Turnstile'
 
 export default function SignupPage() {
   const [name, setName] = useState('')
@@ -13,6 +14,7 @@ export default function SignupPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -21,18 +23,22 @@ export default function SignupPage() {
       setError('Password must be at least 8 characters.')
       return
     }
+    if (TURNSTILE_ENABLED && !captchaToken) {
+      setError('Please complete the verification challenge.')
+      return
+    }
     setLoading(true)
     try {
       const cleanEmail = email.trim().toLowerCase()
-      // Create the account (public create is allowed on the users collection)
-      const createRes = await fetch('/api/users', {
+      // Create the account (CAPTCHA-protected, rate-limited, sends a verify email)
+      const createRes = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name.trim(), email: cleanEmail, password }),
+        body: JSON.stringify({ name: name.trim(), email: cleanEmail, password, turnstileToken: captchaToken }),
       })
       if (!createRes.ok) {
         const data = await createRes.json().catch(() => ({}))
-        setError(data?.errors?.[0]?.message || 'Could not create your account. That email may already be in use.')
+        setError(data?.error || 'Could not create your account. That email may already be in use.')
         setLoading(false)
         return
       }
@@ -84,6 +90,7 @@ export default function SignupPage() {
               <label className="block text-sm font-semibold text-ink-900 mb-1.5">Password</label>
               <Input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="At least 8 characters" autoComplete="new-password" />
             </div>
+            <Turnstile onVerify={setCaptchaToken} />
             <Button type="submit" disabled={loading} className="w-full rounded-xl font-black h-12">
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Create account'}
             </Button>
