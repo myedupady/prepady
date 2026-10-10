@@ -28,8 +28,15 @@ pnpm migrate:status          # (if needed) inspect state
 After any schema change (new field/collection), run `pnpm migrate:create <name>`,
 commit the generated file in `src/migrations/`, and it will apply on the next deploy.
 
-> ⚠️ Run migrations over a **session pooler / direct connection (:5432)**, not the
-> transaction pooler (:6543), which hangs on DDL.
+> ⚠️ **Two different pooler ports — use the right one for the job:**
+> - **Serverless runtime (Vercel) → transaction pooler `:6543`.** Vercel opens a
+>   connection per invocation; the session pooler (`:5432`) caps at 15 clients and
+>   exhausts instantly under serverless, causing "error initializing Payload".
+> - **Migrations (`pnpm migrate`) → session pooler `:5432`.** The transaction pooler
+>   hangs on DDL.
+>
+> So `DATABASE_URI` on Vercel should end in `:6543/postgres`. Run migrations locally
+> (or from a one-off job) over a `:5432` connection.
 
 ### Recommended: a fresh production database
 

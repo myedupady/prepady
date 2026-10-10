@@ -23,6 +23,12 @@ export const Users: CollectionConfig = {
     // logins. Pairs with the per-IP rate limiter in middleware.ts.
     maxLoginAttempts: 10,
     lockTime: 10 * 60 * 1000,
+    cookies: {
+      // Share the auth cookie across apex + www (e.g. COOKIE_DOMAIN=.prepady.com)
+      // so logging in on one host is recognised on the other. Unset in dev
+      // (localhost) → host-only cookie, which is correct there.
+      domain: process.env.COOKIE_DOMAIN || undefined,
+    },
     forgotPassword: {
       generateEmailHTML: (args) => {
         const token = args?.token ?? ''

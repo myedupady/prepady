@@ -55,6 +55,9 @@ export async function POST(req: NextRequest) {
           name: name || email.split('@')[0],
           password: crypto.randomBytes(32).toString('hex'),
           role: 'student',
+          // Google already verified this email, so mark it verified for our
+          // email-gate (and keep Payload's _verified for compatibility).
+          emailVerified: true,
           _verified: true,
         } as Record<string, unknown> as never,
       })
@@ -80,6 +83,8 @@ export async function POST(req: NextRequest) {
       sameSite: 'lax',
       path: '/',
       maxAge: 7 * 24 * 60 * 60,
+      // Share across apex + www when COOKIE_DOMAIN is set (e.g. .prepady.com).
+      ...(process.env.COOKIE_DOMAIN ? { domain: process.env.COOKIE_DOMAIN } : {}),
     })
     return res
   } catch (err) {
