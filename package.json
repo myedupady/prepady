@@ -16,6 +16,8 @@
     "seed": "node -r ./src/scripts/patch-nextenv.cjs -r tsx/cjs src/scripts/seed.ts",
     "ai:explain": "node -r ./src/scripts/patch-nextenv.cjs -r tsx/cjs src/scripts/ai-explain.ts",
     "import:questions": "node -r ./src/scripts/patch-nextenv.cjs -r tsx/cjs src/scripts/import-questions.ts",
+    "admin:promote": "node -r ./src/scripts/patch-nextenv.cjs -r tsx/cjs src/scripts/admin-user.ts promote",
+    "admin:password": "node -r ./src/scripts/patch-nextenv.cjs -r tsx/cjs src/scripts/admin-user.ts password",
     "test:ai": "node --import tsx --test \"src/lib/ai/__tests__/**/*.test.ts\"",
     "test:unit": "node --import tsx --test \"src/lib/**/__tests__/**/*.test.ts\""
   },

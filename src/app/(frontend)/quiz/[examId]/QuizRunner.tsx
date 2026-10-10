@@ -26,7 +26,21 @@ interface AnswerResult {
 }
 type Phase = 'loading' | 'question' | 'complete' | 'empty' | 'error'
 
-export function QuizRunner({ examId, examName, examFull, country }: { examId: string; examName: string; examFull: string; country: string }) {
+export function QuizRunner({
+  examId,
+  examName,
+  country,
+  subjectId = null,
+  topicId = null,
+  label,
+}: {
+  examId: string
+  examName: string
+  country: string
+  subjectId?: string | null
+  topicId?: string | null
+  label?: string
+}) {
   const [phase, setPhase] = useState<Phase>('loading')
   const [errorMsg, setErrorMsg] = useState('')
   const [sessionId, setSessionId] = useState<string>('')
@@ -47,7 +61,7 @@ export function QuizRunner({ examId, examName, examFull, country }: { examId: st
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ examId }),
+        body: JSON.stringify({ examId, subjectId, topicId }),
       })
       const data = await r.json()
       if (r.status === 401) { window.location.href = `/login?redirect=/quiz/${examId}`; return }
@@ -62,7 +76,7 @@ export function QuizRunner({ examId, examName, examFull, country }: { examId: st
       setErrorMsg('Could not start the quiz. Please try again.')
       setPhase('error')
     }
-  }, [examId])
+  }, [examId, subjectId, topicId])
 
   useEffect(() => { start() }, [start])
 
@@ -128,7 +142,7 @@ export function QuizRunner({ examId, examName, examFull, country }: { examId: st
           </Link>
           <div className="flex items-center gap-4">
             <Link href={`/theory/${examId}`} className="text-sm font-semibold text-muted-foreground hover:text-ink-900">Theory</Link>
-            <Link href="/quiz" className="text-sm font-semibold text-muted-foreground hover:text-ink-900">All exams</Link>
+            <Link href={`/quiz/${examId}`} className="text-sm font-semibold text-muted-foreground hover:text-ink-900">Change</Link>
           </div>
         </div>
       </header>
@@ -143,9 +157,9 @@ export function QuizRunner({ examId, examName, examFull, country }: { examId: st
     return (
       <Shell>
         <div className="rounded-3xl border border-dashed border-border bg-card p-10 text-center">
-          <p className="font-display text-xl font-extrabold text-ink-900 mb-1">No questions yet for {examName}</p>
-          <p className="text-muted-foreground text-sm mb-6">We’re adding questions for this exam. Try another one.</p>
-          <Button asChild variant="accent" className="rounded-xl font-black"><Link href="/quiz">Browse exams</Link></Button>
+          <p className="font-display text-xl font-extrabold text-ink-900 mb-1">No questions yet{label ? ` for ${label}` : ` for ${examName}`}</p>
+          <p className="text-muted-foreground text-sm mb-6">Try another subject or topic for this exam.</p>
+          <Button asChild variant="accent" className="rounded-xl font-black"><Link href={`/quiz/${examId}`}>Choose another</Link></Button>
         </div>
       </Shell>
     )
@@ -173,7 +187,7 @@ export function QuizRunner({ examId, examName, examFull, country }: { examId: st
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Button onClick={start} variant="accent" className="rounded-xl font-black"><RotateCcw className="w-4 h-4" /> Practise again</Button>
-            <Button asChild variant="outline" className="rounded-xl font-black"><Link href="/dashboard">Back to dashboard</Link></Button>
+            <Button asChild variant="outline" className="rounded-xl font-black"><Link href={`/quiz/${examId}`}>Choose another</Link></Button>
           </div>
         </div>
       </Shell>
@@ -186,7 +200,7 @@ export function QuizRunner({ examId, examName, examFull, country }: { examId: st
   return (
     <Shell>
       <div className="flex items-center justify-between mb-4">
-        <span className="text-xs font-black uppercase tracking-widest text-gold-700">{examName}{country ? ` · ${country}` : ''}</span>
+        <span className="text-xs font-black uppercase tracking-widest text-gold-700">{examName}{label ? ` · ${label}` : country ? ` · ${country}` : ''}</span>
         <span className="text-xs font-semibold text-muted-foreground">{current} / {total}</span>
       </div>
       <div className="h-1.5 rounded-full bg-muted mb-6 overflow-hidden">

@@ -18,7 +18,11 @@ export async function POST(req: NextRequest) {
     if (!user) return NextResponse.json({ error: 'You must be logged in.' }, { status: 401 })
 
     const body = await req.json().catch(() => ({}))
-    const { examId, subjectId } = body as { examId?: number | string; subjectId?: number | string }
+    const { examId, subjectId, topicId } = body as {
+      examId?: number | string
+      subjectId?: number | string
+      topicId?: number | string
+    }
     if (!examId) return NextResponse.json({ error: 'examId is required.' }, { status: 400 })
 
     // Abandon any existing active session for this user + exam.
@@ -36,6 +40,7 @@ export async function POST(req: NextRequest) {
       { status: { equals: 'published' } },
       { questionType: { equals: 'mcq' } },
       ...(subjectId ? [{ subject: { equals: subjectId } } as Where] : []),
+      ...(topicId ? [{ topicRef: { equals: topicId } } as Where] : []),
     ]
 
     const pool = await payload.find({ collection: 'questions', where: { and: baseClauses }, limit: 200, depth: 0 })
