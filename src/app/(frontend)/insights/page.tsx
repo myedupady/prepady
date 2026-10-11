@@ -1,10 +1,9 @@
 import type { Metadata } from 'next'
-import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getPayload } from 'payload'
 import type { Where, CollectionSlug } from 'payload'
-import configPromise from '@payload-config'
+import { getAuthContext } from '@/lib/auth'
 import {
   GraduationCap, ArrowLeft, Users, FileText, Layers, Activity, Sparkles, DollarSign, Database,
 } from 'lucide-react'
@@ -20,20 +19,9 @@ async function countWhere(payload: Awaited<ReturnType<typeof getPayload>>, colle
 }
 
 export default async function InsightsPage() {
-  const token = (await cookies()).get('payload-token')?.value
-  if (!token) redirect('/login?redirect=/insights')
-  let userId: number | null = null
-  try {
-    const decoded = JSON.parse(Buffer.from(token.split('.')[1]!, 'base64url').toString()) as { id?: number; exp?: number }
-    if (decoded.id && (!decoded.exp || decoded.exp > Date.now() / 1000)) userId = decoded.id
-  } catch {
-    /* malformed */
-  }
-  if (!userId) redirect('/login?redirect=/insights')
-
-  const payload = await getPayload({ config: configPromise })
-  const me = await payload.findByID({ collection: 'users', id: userId, overrideAccess: true }).catch(() => null)
-  if (!me || (me as { role?: string }).role !== 'admin') redirect('/dashboard')
+  const { payload, user } = await getAuthContext()
+  if (!user) redirect('/login?redirect=/insights')
+  if ((user as { role?: string }).role !== 'admin') redirect('/dashboard')
 
   const [
     usersTotal, admins, questionsTotal, mcq, theory, published, withExplanation,

@@ -1,9 +1,7 @@
 import type { Metadata } from 'next'
-import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { getPayload } from 'payload'
-import configPromise from '@payload-config'
+import { getAuthContext } from '@/lib/auth'
 import {
   GraduationCap, Target, Trophy, CheckCircle2, ArrowRight, Sparkles, Globe2, TrendingUp, Gauge, BarChart3, ShieldCheck,
 } from 'lucide-react'
@@ -22,23 +20,9 @@ const pctOf = (s: Session) => (s.maxScore ? Math.round((Number(s.score) / Number
 const bandTone = (pct: number): BarItem['tone'] => (pct >= 75 ? 'good' : pct >= 50 ? 'fair' : 'weak')
 
 export default async function DashboardPage() {
-  const cookieStore = await cookies()
-  const token = cookieStore.get('payload-token')?.value
-  if (!token) redirect('/login?redirect=/dashboard')
-
-  let userId: number | null = null
-  try {
-    const b64 = token.split('.')[1]
-    const decoded = JSON.parse(Buffer.from(b64!, 'base64url').toString()) as { id?: number; exp?: number }
-    if (decoded.id && (!decoded.exp || decoded.exp > Date.now() / 1000)) userId = decoded.id
-  } catch {
-    /* malformed token */
-  }
-  if (!userId) redirect('/login?redirect=/dashboard')
-
-  const payload = await getPayload({ config: configPromise })
-  const user = await payload.findByID({ collection: 'users', id: userId, overrideAccess: true }).catch(() => null)
+  const { payload, user } = await getAuthContext()
   if (!user) redirect('/login?redirect=/dashboard')
+  const userId = user.id
 
   const sessionsRes = await payload
     .find({ collection: 'quiz-sessions', where: { user: { equals: userId } }, sort: '-startedAt', limit: 50, depth: 0, overrideAccess: true })

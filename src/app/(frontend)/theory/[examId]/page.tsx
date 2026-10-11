@@ -1,9 +1,7 @@
-import { cookies } from 'next/headers'
 import { redirect, notFound } from 'next/navigation'
-import { getPayload } from 'payload'
-import configPromise from '@payload-config'
 import { isPremium } from '@/lib/quiz'
 import { relName } from '@/lib/utils'
+import { getAuthContext } from '@/lib/auth'
 import { TheoryRunner, type TheoryQuestion } from './TheoryRunner'
 
 export const dynamic = 'force-dynamic'
@@ -16,25 +14,13 @@ export const dynamic = 'force-dynamic'
 export default async function TheoryPracticePage({ params }: { params: Promise<{ examId: string }> }) {
   const { examId } = await params
 
-  const token = (await cookies()).get('payload-token')?.value
-  let userId: number | null = null
-  if (token) {
-    try {
-      const decoded = JSON.parse(Buffer.from(token.split('.')[1]!, 'base64url').toString()) as { id?: number; exp?: number }
-      if (decoded.id && (!decoded.exp || decoded.exp > Date.now() / 1000)) userId = decoded.id
-    } catch {
-      /* malformed */
-    }
-  }
-  if (!userId) redirect(`/login?redirect=/theory/${examId}`)
+  const { payload, user } = await getAuthContext()
+  if (!user) redirect(`/login?redirect=/theory/${examId}`)
 
-  const payload = await getPayload({ config: configPromise })
   const exam = await payload.findByID({ collection: 'exams', id: examId, depth: 0 }).catch(() => null)
   if (!exam) notFound()
   const e = exam as { code?: string; name?: string; country?: string }
 
-  const user = await payload.findByID({ collection: 'users', id: userId, overrideAccess: true }).catch(() => null)
-  if (!user) redirect(`/login?redirect=/theory/${examId}`)
   const premium = isPremium(user as { plan?: string; subscriptionExpiresAt?: string })
 
   const res = await payload
