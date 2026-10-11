@@ -5,8 +5,27 @@ import Link from 'next/link'
 import { GraduationCap, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { PasswordInput } from '@/components/ui/password-input'
 import { GoogleSignInButton } from '@/components/GoogleSignInButton'
 import { Turnstile, TURNSTILE_ENABLED } from '@/components/Turnstile'
+
+function passwordStrength(pw: string): { score: number; label: string; color: string } {
+  let score = 0
+  if (pw.length >= 8) score++
+  if (pw.length >= 12) score++
+  if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) score++
+  if (/\d/.test(pw)) score++
+  if (/[^A-Za-z0-9]/.test(pw)) score++
+  const levels = [
+    { label: '', color: '' },
+    { label: 'Weak', color: 'bg-destructive' },
+    { label: 'Fair', color: 'bg-gold-400' },
+    { label: 'Good', color: 'bg-gold-500' },
+    { label: 'Strong', color: 'bg-success' },
+    { label: 'Strong', color: 'bg-success' },
+  ]
+  return { score, ...levels[score] }
+}
 
 export default function SignupPage() {
   const [name, setName] = useState('')
@@ -88,7 +107,18 @@ export default function SignupPage() {
             </div>
             <div>
               <label className="block text-sm font-semibold text-ink-900 mb-1.5">Password</label>
-              <Input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="At least 8 characters" autoComplete="new-password" />
+              <PasswordInput required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="At least 8 characters" autoComplete="new-password" />
+              {password.length > 0 && (() => {
+                const s = passwordStrength(password)
+                return (
+                  <div className="mt-2 flex items-center gap-2">
+                    <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
+                      <div className={`h-full transition-all ${s.color}`} style={{ width: `${(s.score / 5) * 100}%` }} />
+                    </div>
+                    <span className="text-xs font-semibold text-muted-foreground w-12 text-right">{s.label}</span>
+                  </div>
+                )
+              })()}
             </div>
             <Turnstile onVerify={setCaptchaToken} />
             <Button type="submit" disabled={loading} className="w-full rounded-xl font-black h-12">

@@ -3,10 +3,11 @@
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import {
-  GraduationCap, Sparkles, CheckCircle2, XCircle, ArrowRight, Loader2, RotateCcw, Lock,
+  GraduationCap, Sparkles, CheckCircle2, XCircle, ArrowRight, Loader2, RotateCcw, Lock, Clock, PlayCircle, AlarmClock,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { MathText } from '@/components/MathText'
+import { getYouTubeId } from '@/lib/utils'
 
 interface ClientQuestion {
   id: number | string
@@ -16,13 +17,15 @@ interface ClientQuestion {
   points: number
   questionImageUrl?: string | null
 }
+interface SessionStats { questionsAnswered: number; totalQuestions: number; score: number; maxScore: number; percentage: number }
 interface AnswerResult {
   isCorrect: boolean
   correctAnswer: string
   explanation: string | null
+  videoUrl?: string | null
   nextQuestion: ClientQuestion | null
   isComplete: boolean
-  stats: { questionsAnswered: number; totalQuestions: number; score: number; maxScore: number; percentage: number }
+  stats: SessionStats
 }
 type Phase = 'loading' | 'question' | 'complete' | 'empty' | 'error'
 
@@ -33,6 +36,7 @@ export function QuizRunner({
   subjectId = null,
   topicId = null,
   label,
+  mode = 'practice',
 }: {
   examId: string
   examName: string
@@ -40,6 +44,7 @@ export function QuizRunner({
   subjectId?: string | null
   topicId?: string | null
   label?: string
+  mode?: 'practice' | 'mock'
 }) {
   const [phase, setPhase] = useState<Phase>('loading')
   const [errorMsg, setErrorMsg] = useState('')
@@ -53,15 +58,23 @@ export function QuizRunner({
   const [aiText, setAiText] = useState<string | null>(null)
   const [aiLoading, setAiLoading] = useState(false)
   const [aiLocked, setAiLocked] = useState(false)
+  // Mock timer + video solution
+  const [deadline, setDeadline] = useState<number | null>(null)
+  const [remainingMs, setRemainingMs] = useState<number>(0)
+  const [timedOut, setTimedOut] = useState(false)
+  const [lastStats, setLastStats] = useState<SessionStats | null>(null)
+  const [showVideo, setShowVideo] = useState(false)
 
   const start = useCallback(async () => {
     setPhase('loading')
+    setTimedOut(false)
+    setDeadline(null)
     try {
       const r = await fetch('/api/quiz/start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ examId, subjectId, topicId }),
+        body: JSON.stringify({ examId, subjectId, topicId, mode }),
       })
       const data = await r.json()
       if (r.status === 401) { window.location.href = `/login?redirect=/quiz/${examId}`; return }
@@ -71,12 +84,32 @@ export function QuizRunner({
       setQuestion(data.firstQuestion)
       setTotal(data.totalQuestions)
       setCurrent(1)
+      setLastStats({ questionsAnswered: 0, totalQuestions: data.totalQuestions, score: 0, maxScore: 0, percentage: 0 })
+      if (data.mode === 'mock' && data.timeLimitMinutes > 0) {
+        setDeadline(Date.now() + data.timeLimitMinutes * 60000)
+      }
       setPhase('question')
     } catch {
       setErrorMsg('Could not start the quiz. Please try again.')
       setPhase('error')
     }
-  }, [examId, subjectId, topicId])
+  }, [examId, subjectId, topicId, mode])
+
+  // Mock countdown — tick every second; complete when time runs out.
+  useEffect(() => {
+    if (!deadline) return
+    const tick = () => {
+      const ms = deadline - Date.now()
+      setRemainingMs(ms)
+      if (ms <= 0) {
+        setTimedOut(true)
+        setPhase('complete')
+      }
+    }
+    tick()
+    const id = setInterval(tick, 1000)
+    return () => clearInterval(id)
+  }, [deadline])
 
   useEffect(() => { start() }, [start])
 
@@ -93,6 +126,8 @@ export function QuizRunner({
       const data = (await r.json()) as AnswerResult
       if (!r.ok) { setErrorMsg('Could not submit your answer.'); setPhase('error'); return }
       setResult(data)
+      setLastStats(data.stats)
+      setShowVideo(false)
     } catch {
       setErrorMsg('Could not submit your answer.'); setPhase('error')
     } finally {
@@ -109,7 +144,13 @@ export function QuizRunner({
     setResult(null)
     setAiText(null)
     setAiLocked(false)
+    setShowVideo(false)
   }
+
+  const mins = Math.max(0, Math.floor(remainingMs / 60000))
+  const secs = Math.max(0, Math.floor((remainingMs % 60000) / 1000))
+  const timeStr = `${mins}:${String(secs).padStart(2, '0')}`
+  const lowTime = deadline && remainingMs < 60000
 
   async function explain() {
     if (!question || aiLoading) return
@@ -175,15 +216,16 @@ export function QuizRunner({
       </Shell>
     )
   }
-  if (phase === 'complete' && result) {
-    const pct = result.stats.percentage
+  if (phase === 'complete') {
+    const s = result?.stats ?? lastStats ?? { score: 0, maxScore: 0, percentage: 0, questionsAnswered: 0, totalQuestions: total }
     return (
       <Shell>
         <div className="rounded-3xl border border-border bg-card shadow-brand p-10 text-center">
-          <Sparkles className="w-9 h-9 text-gold-500 mx-auto mb-3" />
-          <p className="font-display text-3xl font-extrabold text-ink-900">{pct}%</p>
+          {timedOut ? <AlarmClock className="w-9 h-9 text-destructive mx-auto mb-3" /> : <Sparkles className="w-9 h-9 text-gold-500 mx-auto mb-3" />}
+          {timedOut && <p className="font-black text-destructive text-sm uppercase tracking-widest mb-2">Time&apos;s up</p>}
+          <p className="font-display text-3xl font-extrabold text-ink-900">{s.percentage}%</p>
           <p className="text-muted-foreground text-sm mt-1 mb-7">
-            You scored {result.stats.score} of {result.stats.maxScore} on {examName}.
+            You scored {s.score} of {s.maxScore} on {examName}{label ? ` · ${label}` : ''}.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Button onClick={start} variant="accent" className="rounded-xl font-black"><RotateCcw className="w-4 h-4" /> Practise again</Button>
@@ -201,7 +243,14 @@ export function QuizRunner({
     <Shell>
       <div className="flex items-center justify-between mb-4">
         <span className="text-xs font-black uppercase tracking-widest text-gold-700">{examName}{label ? ` · ${label}` : country ? ` · ${country}` : ''}</span>
-        <span className="text-xs font-semibold text-muted-foreground">{current} / {total}</span>
+        <div className="flex items-center gap-3">
+          {deadline && (
+            <span className={`inline-flex items-center gap-1 text-xs font-black tabular-nums px-2 py-1 rounded-lg ${lowTime ? 'bg-destructive/10 text-destructive animate-pulse' : 'bg-ink-900 text-gold-400'}`}>
+              <Clock className="w-3.5 h-3.5" /> {timeStr}
+            </span>
+          )}
+          <span className="text-xs font-semibold text-muted-foreground">{current} / {total}</span>
+        </div>
       </div>
       <div className="h-1.5 rounded-full bg-muted mb-6 overflow-hidden">
         <div className="h-full bg-gold-400 transition-all" style={{ width: `${(current / Math.max(1, total)) * 100}%` }} />
@@ -261,6 +310,30 @@ export function QuizRunner({
               <Button onClick={explain} variant="outline" disabled={aiLoading} className="rounded-xl font-bold w-full sm:w-auto">
                 {aiLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Sparkles className="w-4 h-4" /> Explain this to me</>}
               </Button>
+            )}
+
+            {result?.videoUrl && (
+              <div className="mt-4">
+                {!showVideo ? (
+                  <Button onClick={() => setShowVideo(true)} variant="ghost" className="rounded-xl font-bold text-ink-900 hover:bg-ink-50">
+                    <PlayCircle className="w-4 h-4" /> Watch video solution
+                  </Button>
+                ) : getYouTubeId(result.videoUrl) ? (
+                  <div className="relative w-full overflow-hidden rounded-2xl border border-border" style={{ aspectRatio: '16 / 9' }}>
+                    <iframe
+                      src={`https://www.youtube.com/embed/${getYouTubeId(result.videoUrl)}`}
+                      title="Video solution"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      className="absolute inset-0 w-full h-full"
+                    />
+                  </div>
+                ) : (
+                  <a href={result.videoUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm font-bold text-gold-700 hover:text-gold-800">
+                    <PlayCircle className="w-4 h-4" /> Open video solution
+                  </a>
+                )}
+              </div>
             )}
 
             <div className="mt-5 flex justify-end">

@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { GraduationCap, ArrowLeft, Sparkles, PenLine, ChevronRight, Layers } from 'lucide-react'
+import { GraduationCap, ArrowLeft, Sparkles, PenLine, ChevronRight, Layers, Timer } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 export interface TopicCount {
@@ -73,6 +73,23 @@ export function SubjectPicker({
                 <div>
                   <p className="font-black text-ink-900">Quick practice — all subjects</p>
                   <p className="text-xs text-muted-foreground">Adaptive mix across every subject ({totalMcq} question{totalMcq === 1 ? '' : 's'}).</p>
+                </div>
+              </div>
+              <ChevronRight className="w-5 h-5 text-muted-foreground shrink-0" />
+            </Link>
+
+            {/* Timed mock */}
+            <Link
+              href={`/quiz/${examId}?mock=1`}
+              className="flex items-center justify-between gap-4 rounded-2xl border border-border bg-card shadow-brand p-5 mb-6 hover:shadow-lg transition-shadow"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gold-100 flex items-center justify-center shrink-0">
+                  <Timer className="w-5 h-5 text-gold-700" />
+                </div>
+                <div>
+                  <p className="font-black text-ink-900">Timed mock exam</p>
+                  <p className="text-xs text-muted-foreground">A CBT-style run against the clock, mixed across subjects.</p>
                 </div>
               </div>
               <ChevronRight className="w-5 h-5 text-muted-foreground shrink-0" />

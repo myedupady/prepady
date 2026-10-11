@@ -18,12 +18,14 @@ export async function POST(req: NextRequest) {
     if (!user) return NextResponse.json({ error: 'You must be logged in.' }, { status: 401 })
 
     const body = await req.json().catch(() => ({}))
-    const { examId, subjectId, topicId } = body as {
+    const { examId, subjectId, topicId, mode } = body as {
       examId?: number | string
       subjectId?: number | string
       topicId?: number | string
+      mode?: 'practice' | 'mock'
     }
     if (!examId) return NextResponse.json({ error: 'examId is required.' }, { status: 400 })
+    const isMock = mode === 'mock'
 
     // Abandon any existing active session for this user + exam.
     const existing = await payload.find({
@@ -48,7 +50,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'No questions available for this exam yet. Please check back soon.' }, { status: 503 })
     }
 
-    const totalQuestions = Math.min(pool.docs.length, SESSION_QUESTIONS)
+    const targetQuestions = isMock ? 20 : SESSION_QUESTIONS
+    const totalQuestions = Math.min(pool.docs.length, targetQuestions)
+    const timeLimitMinutes = isMock ? Math.ceil(totalQuestions * 1.2) : 0
     const easy = pool.docs.filter((q) => String(q.difficulty) === '1')
     const first = shuffle(easy.length ? easy : pool.docs)[0]!
 
@@ -58,10 +62,10 @@ export async function POST(req: NextRequest) {
         user: user.id,
         exam: String(examId),
         subject: subjectId ? Number(subjectId) : undefined,
-        mode: 'practice',
+        mode: isMock ? 'mock' : 'practice',
         status: 'active',
         totalQuestions,
-        timeLimitMinutes: 0,
+        timeLimitMinutes,
         currentDifficulty: 1,
         correctStreak: 0,
         startedAt: new Date().toISOString(),
@@ -77,6 +81,8 @@ export async function POST(req: NextRequest) {
       firstQuestion: sanitiseQuestion(first as unknown as Record<string, unknown>),
       totalQuestions,
       currentQuestion: 1,
+      mode: isMock ? 'mock' : 'practice',
+      timeLimitMinutes,
     })
   } catch (err) {
     console.error('quiz/start error:', err)

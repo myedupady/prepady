@@ -3,6 +3,7 @@ import { getPayload } from 'payload'
 import type { RequiredDataFromCollectionSlug, Where } from 'payload'
 import configPromise from '@payload-config'
 import { shuffle, sanitiseQuestion, updateDifficulty, isCorrectAnswer, type Difficulty } from '@/lib/quiz'
+import { relName } from '@/lib/utils'
 
 /**
  * POST /api/quiz/answer  Body: { sessionId, questionId, givenAnswer }
@@ -34,8 +35,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'This session is already complete.' }, { status: 409 })
     }
 
-    const question = await payload.findByID({ collection: 'questions', id: questionId }).catch(() => null)
+    const question = await payload.findByID({ collection: 'questions', id: questionId, depth: 1 }).catch(() => null)
     if (!question) return NextResponse.json({ error: 'Question not found.' }, { status: 404 })
+    const subjectName = relName(question.subject)
+    const topicName = relName(question.topicRef)
+    const videoUrl = (question as { videoSolutionUrl?: string }).videoSolutionUrl || null
 
     const isCorrect = isCorrectAnswer(givenAnswer, String(question.correctAnswer ?? ''))
     const points = (question.maxMarks as number) ?? 1
@@ -127,6 +131,8 @@ export async function POST(req: NextRequest) {
             givenAnswer,
             isCorrect,
             pointsEarned: earned,
+            subjectName,
+            topicName,
             answeredAt: new Date().toISOString(),
           },
         ],
@@ -137,6 +143,7 @@ export async function POST(req: NextRequest) {
       isCorrect,
       correctAnswer: question.correctAnswer,
       explanation: (question.explanation as string) ?? null,
+      videoUrl,
       nextQuestion,
       isComplete: done,
       stats: {

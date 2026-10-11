@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { GraduationCap, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { PasswordInput } from '@/components/ui/password-input'
 import { GoogleSignInButton } from '@/components/GoogleSignInButton'
 
 export default function LoginPage() {
@@ -62,7 +63,7 @@ export default function LoginPage() {
             </div>
             <div>
               <label className="block text-sm font-semibold text-ink-900 mb-1.5">Password</label>
-              <Input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" autoComplete="current-password" />
+              <PasswordInput required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" autoComplete="current-password" />
               <div className="text-right mt-1.5">
                 <Link href="/forgot-password" className="text-xs font-semibold text-muted-foreground hover:text-gold-600">Forgot password?</Link>
               </div>

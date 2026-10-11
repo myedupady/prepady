@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { GraduationCap, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { PasswordInput } from '@/components/ui/password-input'
 
 export default function ResetPasswordPage() {
   const [password, setPassword] = useState('')
@@ -55,11 +55,16 @@ export default function ResetPasswordPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-semibold text-ink-900 mb-1.5">New password</label>
-              <Input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="At least 8 characters" autoComplete="new-password" />
+              <PasswordInput required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="At least 8 characters" autoComplete="new-password" />
             </div>
             <div>
               <label className="block text-sm font-semibold text-ink-900 mb-1.5">Confirm password</label>
-              <Input type="password" required value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder="Re-enter password" autoComplete="new-password" />
+              <PasswordInput required value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder="Re-enter password" autoComplete="new-password" />
+              {confirm.length > 0 && (
+                <p className={`text-xs font-semibold mt-1.5 ${password === confirm ? 'text-success' : 'text-destructive'}`}>
+                  {password === confirm ? '✓ Passwords match' : 'Passwords do not match'}
+                </p>
+              )}
             </div>
             <Button type="submit" disabled={loading} className="w-full rounded-xl font-black h-12">
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Reset password'}

@@ -75,6 +75,9 @@ export const QuizSessions: CollectionConfig = {
         { name: 'givenAnswer', type: 'text' },
         { name: 'isCorrect', type: 'checkbox', defaultValue: false },
         { name: 'pointsEarned', type: 'number', defaultValue: 0 },
+        // Denormalised labels for cheap per-subject/topic gap detection.
+        { name: 'subjectName', type: 'text' },
+        { name: 'topicName', type: 'text' },
         { name: 'answeredAt', type: 'date' },
       ],
     },

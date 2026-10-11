@@ -13,10 +13,11 @@ export default async function ExamQuizPage({
   searchParams,
 }: {
   params: Promise<{ examId: string }>
-  searchParams: Promise<{ subject?: string; topic?: string; all?: string }>
+  searchParams: Promise<{ subject?: string; topic?: string; all?: string; mock?: string }>
 }) {
   const { examId } = await params
   const sp = await searchParams
+  const isMock = sp.mock === '1'
 
   // Gate: must be logged in.
   const token = (await cookies()).get('payload-token')?.value
@@ -37,8 +38,8 @@ export default async function ExamQuizPage({
   const e = exam as { code?: string; name?: string; country?: string }
   const examName = e.code ?? 'Exam'
 
-  // ── Run a session when a subject/topic (or "all") is chosen ────────────────
-  if (sp.subject || sp.all) {
+  // ── Run a session when a subject/topic, "all", or mock is chosen ───────────
+  if (sp.subject || sp.all || isMock) {
     let subjectName: string | null = null
     let topicName: string | null = null
     if (sp.subject) {
@@ -49,15 +50,16 @@ export default async function ExamQuizPage({
       const top = await payload.findByID({ collection: 'topics', id: sp.topic, depth: 0 }).catch(() => null)
       topicName = (top as { name?: string } | null)?.name ?? null
     }
-    const label = topicName || subjectName || 'All subjects'
+    const label = isMock ? 'Timed mock' : topicName || subjectName || 'All subjects'
     return (
       <QuizRunner
         examId={examId}
         examName={examName}
         country={e.country ?? ''}
-        subjectId={sp.subject ?? null}
-        topicId={sp.topic ?? null}
+        subjectId={isMock ? null : sp.subject ?? null}
+        topicId={isMock ? null : sp.topic ?? null}
         label={label}
+        mode={isMock ? 'mock' : 'practice'}
       />
     )
   }

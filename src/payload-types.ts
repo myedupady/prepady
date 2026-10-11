@@ -490,6 +490,8 @@ export interface QuizSession {
         givenAnswer?: string | null;
         isCorrect?: boolean | null;
         pointsEarned?: number | null;
+        subjectName?: string | null;
+        topicName?: string | null;
         answeredAt?: string | null;
         id?: string | null;
       }[]
@@ -773,6 +775,8 @@ export interface QuizSessionsSelect<T extends boolean = true> {
         givenAnswer?: T;
         isCorrect?: T;
         pointsEarned?: T;
+        subjectName?: T;
+        topicName?: T;
         answeredAt?: T;
         id?: T;
       };
