@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import {
-  GraduationCap, Sparkles, CheckCircle2, XCircle, ArrowRight, Loader2, RotateCcw, Lock, Clock, PlayCircle, AlarmClock,
+  GraduationCap, Sparkles, CheckCircle2, XCircle, ArrowRight, Loader2, RotateCcw, Lock, Clock, PlayCircle, AlarmClock, Send, MessageCircleQuestion,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { MathText } from '@/components/MathText'
@@ -64,6 +64,11 @@ export function QuizRunner({
   const [timedOut, setTimedOut] = useState(false)
   const [lastStats, setLastStats] = useState<SessionStats | null>(null)
   const [showVideo, setShowVideo] = useState(false)
+  // Follow-up AI conversation (per question)
+  const [followups, setFollowups] = useState<{ q: string; a: string }[]>([])
+  const [fuInput, setFuInput] = useState('')
+  const [fuLoading, setFuLoading] = useState(false)
+  const [fuLocked, setFuLocked] = useState<string | null>(null)
 
   const start = useCallback(async () => {
     setPhase('loading')
@@ -145,6 +150,9 @@ export function QuizRunner({
     setAiText(null)
     setAiLocked(false)
     setShowVideo(false)
+    setFollowups([])
+    setFuInput('')
+    setFuLocked(null)
   }
 
   const mins = Math.max(0, Math.floor(remainingMs / 60000))
@@ -173,12 +181,38 @@ export function QuizRunner({
     }
   }
 
+  async function askFollowUp() {
+    const msg = fuInput.trim()
+    if (!msg || !question || fuLoading) return
+    setFuLoading(true)
+    setFuInput('')
+    try {
+      const r = await fetch('/api/ai/explain', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ questionId: question.id, givenAnswer: selected, mode: 'followup', message: msg }),
+      })
+      const data = await r.json()
+      if (r.status === 403 && (data.requiresUpgrade || data.requiresVerification)) {
+        setFuLocked(data.error || 'You’ve used your free AI questions for today.')
+        return
+      }
+      if (r.ok) setFollowups((f) => [...f, { q: msg, a: data.explanation }])
+      else setFollowups((f) => [...f, { q: msg, a: data.error || 'Could not answer right now. Please try again.' }])
+    } catch {
+      setFollowups((f) => [...f, { q: msg, a: 'Could not answer right now. Please try again.' }])
+    } finally {
+      setFuLoading(false)
+    }
+  }
+
   // ── Shells ─────────────────────────────────────────────────────────────────
   const Shell = ({ children }: { children: React.ReactNode }) => (
     <main className="min-h-screen bg-background">
       <header className="sticky top-0 z-50 bg-background/90 backdrop-blur border-b border-border">
         <div className="max-w-2xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 font-display font-extrabold text-lg text-ink-900">
+          <Link href="/dashboard" className="flex items-center gap-2 font-display font-extrabold text-lg text-ink-900">
             <GraduationCap className="w-6 h-6 text-gold-500" /> Prepady<span className="text-gold-500">.</span>
           </Link>
           <div className="flex items-center gap-4">
@@ -335,6 +369,39 @@ export function QuizRunner({
                 )}
               </div>
             )}
+
+            {/* Ask the AI tutor a follow-up */}
+            <div className="mt-5 border-t border-border pt-4">
+              <p className="flex items-center gap-1.5 text-xs font-black uppercase tracking-widest text-muted-foreground mb-3">
+                <MessageCircleQuestion className="w-3.5 h-3.5" /> Ask the AI tutor
+              </p>
+              {followups.map((f, i) => (
+                <div key={i} className="mb-3">
+                  <p className="text-sm font-bold text-ink-900 mb-1">{f.q}</p>
+                  <div className="rounded-2xl bg-gold-50 border border-gold-200 p-3 text-sm text-ink-900 leading-relaxed"><MathText>{f.a}</MathText></div>
+                </div>
+              ))}
+              {fuLocked ? (
+                <div className="rounded-xl border-2 border-dashed border-gold-300 bg-gold-50/60 p-3 text-center text-sm text-ink-900">
+                  <Lock className="w-4 h-4 text-gold-600 inline mr-1 -mt-0.5" /> {fuLocked}{' '}
+                  <Link href="/dashboard" className="font-bold text-gold-700 underline">Upgrade</Link> for unlimited.
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <input
+                    value={fuInput}
+                    onChange={(e) => setFuInput(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); askFollowUp() } }}
+                    disabled={fuLoading}
+                    placeholder="e.g. Why did we subtract 3 first?"
+                    className="flex-1 h-10 rounded-xl border border-input bg-background px-3.5 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+                  />
+                  <Button onClick={askFollowUp} disabled={fuLoading || !fuInput.trim()} className="rounded-xl font-black h-10 px-4">
+                    {fuLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                  </Button>
+                </div>
+              )}
+            </div>
 
             <div className="mt-5 flex justify-end">
               <Button onClick={next} className="rounded-xl font-black">

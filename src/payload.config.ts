@@ -71,6 +71,9 @@ export default buildConfig({
     meta: {
       titleSuffix: '— Prepady Admin',
     },
+    components: {
+      afterNavLinks: ['/src/components/admin/AdminNavLinks.tsx#AdminNavLinks'],
+    },
   },
   collections: [Users, Media, Regions, Exams, Subjects, Topics, Questions, QuizSessions],
   globals: [Theme, AIControls],

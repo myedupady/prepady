@@ -29,7 +29,8 @@ export default function LoginPage() {
       if (r.ok) {
         const params = new URLSearchParams(window.location.search)
         const to = params.get('redirect')
-        window.location.href = to && to.startsWith('/') ? to : '/dashboard'
+        if (to && to.startsWith('/')) window.location.href = to
+        else window.location.href = data?.user?.role === 'admin' ? '/admin' : '/dashboard'
       } else {
         setError(data?.errors?.[0]?.message || data?.message || 'Invalid email or password.')
         setLoading(false)
