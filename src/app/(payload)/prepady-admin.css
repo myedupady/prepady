@@ -1,0 +1,62 @@
+/**
+ * Prepady brand skin for the Payload admin. Loaded after Payload's own styles,
+ * so these rules win. Conservative overrides — keeps Payload's structure and
+ * legibility, just swaps the grey defaults for the cream / ink / gold palette.
+ */
+
+:root,
+[data-theme='light'] {
+  /* Warm the canvas and surfaces slightly. */
+  --theme-bg: #f7f3ea;
+  --theme-elevation-0: #ffffff;
+  --theme-elevation-50: #fbf8f1;
+  --theme-elevation-100: #f3ece0;
+  /* Brand accent used across Payload's success/active states. */
+  --theme-success-500: #c77e12;
+  --theme-success-550: #b06f0f;
+}
+
+/* Primary buttons → ink (brand), with gold hover. */
+.btn.btn--style-primary,
+button.btn--style-primary,
+.btn--style-primary {
+  background-color: #201b15;
+  border-color: #201b15;
+  color: #f6f2e9;
+}
+.btn.btn--style-primary:hover,
+button.btn--style-primary:hover {
+  background-color: #33291d;
+  border-color: #33291d;
+}
+
+/* Gold accents: links, active nav, tabs, focus rings. */
+a:not(.btn),
+.nav__link:hover,
+.step-nav a {
+  color: #c77e12;
+}
+.nav__link.active,
+.nav-group__toggle.active {
+  color: #201b15;
+  font-weight: 700;
+}
+.doc-tab--active,
+.tabs-field__tab--active {
+  border-bottom-color: #f2a33c !important;
+}
+
+/* Rounder, softer cards/inputs to match the app. */
+.card,
+.collection-list__wrap,
+.field-type input:not([type='checkbox']):not([type='radio']),
+.field-type textarea,
+.field-type .rs__control {
+  border-radius: 10px;
+}
+
+/* Logo wordmark in the nav. */
+.nav__brand,
+.nav-toggler + a {
+  font-weight: 800;
+}

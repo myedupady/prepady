@@ -22,6 +22,32 @@ import { AIControls } from './globals/AIControls'
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
+/**
+ * Trusted origins for CORS + CSRF. We include BOTH the apex and www variants of
+ * NEXT_PUBLIC_SERVER_URL (so cookie auth works whether a visitor lands on
+ * prepady.com or www.prepady.com), the Vercel production URL, and localhost.
+ * This prevents the "logged in but bounced to login" split between www and apex.
+ */
+function trustedOrigins(): string[] {
+  const out = new Set<string>(['http://localhost:3000'])
+  const add = (url?: string) => {
+    if (!url) return
+    try {
+      const u = new URL(url.startsWith('http') ? url : `https://${url}`)
+      const bare = u.host.replace(/^www\./, '')
+      out.add(`${u.protocol}//${bare}`)
+      out.add(`${u.protocol}//www.${bare}`)
+    } catch {
+      /* ignore malformed */
+    }
+  }
+  add(process.env.NEXT_PUBLIC_SERVER_URL)
+  add(process.env.VERCEL_PROJECT_PRODUCTION_URL)
+  add(process.env.VERCEL_URL)
+  return [...out]
+}
+const ORIGINS = trustedOrigins()
+
 // Cloudinary (under a "prepady/" subfolder of the shared account) is used when
 // its credentials are present; otherwise media falls back to local-disk storage.
 const plugins = process.env.CLOUDINARY_CLOUD_NAME
@@ -66,6 +92,6 @@ export default buildConfig({
   sharp,
   // Media → Cloudinary ("prepady/" folder) when CLOUDINARY_* creds are set
   // (see `plugins` above); otherwise local-disk for zero-config dev.
-  cors: [process.env.NEXT_PUBLIC_SERVER_URL ?? 'http://localhost:3000'].filter(Boolean),
-  csrf: [process.env.NEXT_PUBLIC_SERVER_URL ?? 'http://localhost:3000'].filter(Boolean),
+  cors: ORIGINS,
+  csrf: ORIGINS,
 })

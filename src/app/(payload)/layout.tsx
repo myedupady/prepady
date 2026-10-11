@@ -4,6 +4,7 @@ import React from 'react'
 
 import '@payloadcms/ui/styles.css'
 import '@payloadcms/next/css'
+import './prepady-admin.css'
 import { importMap } from './importMap.js'
 
 type Args = {
