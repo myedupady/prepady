@@ -268,8 +268,14 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <footer className="bg-ink-950 text-ink-300 text-center text-sm py-8">
-        © {new Date().getFullYear()} Prepady. AI-powered exam preparation across Africa.
+      <footer className="bg-ink-950 text-ink-300 text-sm py-8">
+        <div className="max-w-5xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
+          <p>© {new Date().getFullYear()} Prepady. AI-powered exam preparation across Africa.</p>
+          <nav className="flex items-center gap-5">
+            <Link href="/privacy" className="hover:text-gold-400 transition-colors">Privacy</Link>
+            <Link href="/terms" className="hover:text-gold-400 transition-colors">Terms</Link>
+          </nav>
+        </div>
       </footer>
     </main>
   )
