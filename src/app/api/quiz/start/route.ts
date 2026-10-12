@@ -64,6 +64,7 @@ export async function POST(req: NextRequest) {
         user: user.id,
         exam: String(examId),
         subject: subjectId ? Number(subjectId) : undefined,
+        topicRef: topicId ? Number(topicId) : undefined,
         mode: isMock ? 'mock' : 'practice',
         status: 'active',
         totalQuestions,

@@ -70,6 +70,10 @@ export async function POST(req: NextRequest) {
         session.subject != null
           ? [{ subject: { equals: (session.subject as { id?: number })?.id ?? session.subject } } as Where]
           : []
+      const topicClause: Where[] =
+        session.topicRef != null
+          ? [{ topicRef: { equals: (session.topicRef as { id?: number })?.id ?? session.topicRef } } as Where]
+          : []
       const tryDiffs: Difficulty[] = [newDiff]
       if (newDiff > 1) tryDiffs.push((newDiff - 1) as Difficulty)
       if (newDiff < 3) tryDiffs.push((newDiff + 1) as Difficulty)
@@ -84,6 +88,7 @@ export async function POST(req: NextRequest) {
               { questionType: { equals: 'mcq' } },
               { difficulty: { equals: String(diff) } },
               ...subjectClause,
+              ...topicClause,
             ],
           },
           limit: 50,
@@ -96,11 +101,19 @@ export async function POST(req: NextRequest) {
           break
         }
       }
-      // Fallback: any unasked MCQ for this exam.
+      // Fallback: any unasked MCQ in the same exam + subject + topic scope.
       if (!nextQuestion) {
         const fallback = await payload.find({
           collection: 'questions',
-          where: { and: [{ exam: { equals: session.exam } }, { status: { equals: 'published' } }, { questionType: { equals: 'mcq' } }] },
+          where: {
+            and: [
+              { exam: { equals: session.exam } },
+              { status: { equals: 'published' } },
+              { questionType: { equals: 'mcq' } },
+              ...subjectClause,
+              ...topicClause,
+            ],
+          },
           limit: 100,
         })
         const fresh = fallback.docs.filter((q) => !asked.includes(q.id))

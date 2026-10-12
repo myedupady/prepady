@@ -36,6 +36,12 @@ export const QuizSessions: CollectionConfig = {
       admin: { position: 'sidebar', description: 'Single-subject focus, or blank for a mixed/mock session.' },
     },
     {
+      name: 'topicRef',
+      type: 'relationship',
+      relationTo: 'topics',
+      admin: { position: 'sidebar', description: 'Single-topic focus, or blank for a whole-subject/mixed session.' },
+    },
+    {
       name: 'mode',
       type: 'select',
       defaultValue: 'practice',

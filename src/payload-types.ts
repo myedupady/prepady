@@ -465,6 +465,10 @@ export interface QuizSession {
    * Single-subject focus, or blank for a mixed/mock session.
    */
   subject?: (number | null) | Subject;
+  /**
+   * Single-topic focus, or blank for a whole-subject/mixed session.
+   */
+  topicRef?: (number | null) | Topic;
   mode?: ('practice' | 'mock') | null;
   status: 'active' | 'completed' | 'abandoned';
   totalQuestions: number;
@@ -757,6 +761,7 @@ export interface QuizSessionsSelect<T extends boolean = true> {
   user?: T;
   exam?: T;
   subject?: T;
+  topicRef?: T;
   mode?: T;
   status?: T;
   totalQuestions?: T;
