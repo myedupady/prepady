@@ -45,6 +45,7 @@ export default async function TheoryPracticePage({ params }: { params: Promise<{
     questionText: String(q.questionText ?? ''),
     topic: relName(q.topicRef) ?? ((q.topic as string) ?? null),
     maxMarks: Number(q.maxMarks) || 1,
+    questionImageUrl: (q.questionImage as { url?: string } | null)?.url ?? null,
   }))
 
   return (

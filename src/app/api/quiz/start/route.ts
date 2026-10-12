@@ -55,6 +55,8 @@ export async function POST(req: NextRequest) {
     const timeLimitMinutes = isMock ? Math.ceil(totalQuestions * 1.2) : 0
     const easy = pool.docs.filter((q) => String(q.difficulty) === '1')
     const first = shuffle(easy.length ? easy : pool.docs)[0]!
+    // Re-fetch with depth 1 so the question image (upload relationship) is populated.
+    const firstFull = await payload.findByID({ collection: 'questions', id: first.id, depth: 1 }).catch(() => first)
 
     const session = await payload.create({
       collection: 'quiz-sessions',
@@ -78,7 +80,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       sessionId: session.id,
-      firstQuestion: sanitiseQuestion(first as unknown as Record<string, unknown>),
+      firstQuestion: sanitiseQuestion(firstFull as unknown as Record<string, unknown>),
       totalQuestions,
       currentQuestion: 1,
       mode: isMock ? 'mock' : 'practice',

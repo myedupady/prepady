@@ -14,6 +14,7 @@ export interface TheoryQuestion {
   questionText: string
   topic: string | null
   maxMarks: number
+  questionImageUrl?: string | null
 }
 
 interface MarkResult {
@@ -151,6 +152,10 @@ export function TheoryRunner({
       {question && (
         <div className="rounded-3xl border border-border bg-card shadow-brand p-6 sm:p-8">
           {question.topic && <p className="text-xs font-semibold text-muted-foreground mb-2">{question.topic}</p>}
+          {question.questionImageUrl && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={question.questionImageUrl} alt="Question diagram" className="mb-3 max-h-80 w-auto max-w-full rounded-xl border border-border" />
+          )}
           <p className="text-lg font-bold text-ink-900 mb-1"><MathText>{question.questionText}</MathText></p>
           <p className="text-xs text-muted-foreground mb-5">{question.maxMarks} mark{question.maxMarks === 1 ? '' : 's'}</p>
 

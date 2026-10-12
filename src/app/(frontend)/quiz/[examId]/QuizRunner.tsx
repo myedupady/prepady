@@ -291,6 +291,10 @@ export function QuizRunner({
       </div>
 
       <div className="rounded-3xl border border-border bg-card shadow-brand p-6 sm:p-8">
+        {question.questionImageUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={question.questionImageUrl} alt="Question diagram" className="mb-4 max-h-80 w-auto max-w-full rounded-xl border border-border" />
+        )}
         <p className="text-lg font-bold text-ink-900 mb-5"><MathText>{question.questionText}</MathText></p>
         <div className="space-y-2.5">
           {question.options.map((opt, oi) => {
