@@ -125,7 +125,7 @@ export function TheoryRunner({
           <Lock className="w-8 h-8 text-gold-600 mx-auto mb-3" />
           <p className="font-display text-xl font-extrabold text-ink-900 mb-1">Essay marking is a Premium feature</p>
           <p className="text-muted-foreground text-sm mb-6">Upgrade to get your theory answers marked against the scheme, with strengths and gaps.</p>
-          <Button asChild variant="accent" className="rounded-xl font-black"><Link href="/dashboard">See plans</Link></Button>
+          <Button asChild variant="accent" className="rounded-xl font-black"><Link href="/upgrade">See plans</Link></Button>
         </div>
       </Shell>
     )

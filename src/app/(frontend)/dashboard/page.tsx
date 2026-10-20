@@ -116,6 +116,19 @@ export default async function DashboardPage() {
           ))}
         </div>
 
+        {/* Upgrade CTA (free users) */}
+        {!premium && (
+          <Link href="/upgrade" className="block mb-8 rounded-2xl bg-ink-900 text-ink-50 p-5 hover:bg-ink-800 transition-colors">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="font-black flex items-center gap-2"><Sparkles className="w-4 h-4 text-gold-400" /> Go Premium</p>
+                <p className="text-sm text-ink-300 mt-0.5">Unlimited AI help, essay marking, timed mocks & the full past-question bank.</p>
+              </div>
+              <span className="text-sm font-black text-gold-400 shrink-0 whitespace-nowrap">Upgrade →</span>
+            </div>
+          </Link>
+        )}
+
         {/* Charts row */}
         <div className="grid md:grid-cols-3 gap-4 mb-8">
           <Card className="border border-border bg-card shadow-brand">

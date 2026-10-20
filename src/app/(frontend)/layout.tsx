@@ -10,6 +10,21 @@ export const metadata: Metadata = {
   title: 'Prepady — AI exam prep for Africa',
   description:
     'Adaptive practice tests, real past questions, and an AI tutor that explains every question — for national exams across Africa.',
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: '48x48', type: 'image/x-icon' },
+    ],
+    apple: [
+      { url: '/apple-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
+  },
+  openGraph: {
+    title: 'Prepady — AI exam prep for Africa',
+    description:
+      'Adaptive practice tests, real past questions, and an AI tutor that explains every question — for national exams across Africa.',
+    images: [{ url: '/opengraph-image.png', width: 1200, height: 630 }],
+  },
+  manifest: '/manifest.json',
 }
 
 /**

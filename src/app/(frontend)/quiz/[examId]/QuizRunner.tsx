@@ -337,7 +337,7 @@ export function QuizRunner({
                 <Lock className="w-6 h-6 text-gold-600 mx-auto mb-2" />
                 <p className="text-sm text-ink-900 font-semibold mb-1">You’ve used your free AI explanations for today.</p>
                 <p className="text-xs text-muted-foreground mb-3">Upgrade to Premium for unlimited explanations.</p>
-                <Button asChild variant="accent" size="sm" className="rounded-lg font-black"><Link href="/dashboard">See plans</Link></Button>
+                <Button asChild variant="accent" size="sm" className="rounded-lg font-black"><Link href="/upgrade">See plans</Link></Button>
               </div>
             ) : aiText ? (
               <div className="rounded-2xl bg-gold-50 border border-gold-200 p-4">
@@ -388,7 +388,7 @@ export function QuizRunner({
               {fuLocked ? (
                 <div className="rounded-xl border-2 border-dashed border-gold-300 bg-gold-50/60 p-3 text-center text-sm text-ink-900">
                   <Lock className="w-4 h-4 text-gold-600 inline mr-1 -mt-0.5" /> {fuLocked}{' '}
-                  <Link href="/dashboard" className="font-bold text-gold-700 underline">Upgrade</Link> for unlimited.
+                  <Link href="/upgrade" className="font-bold text-gold-700 underline">Upgrade</Link> for unlimited.
                 </div>
               ) : (
                 <div className="flex gap-2">

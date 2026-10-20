@@ -70,6 +70,13 @@ export default buildConfig({
     user: Users.slug,
     meta: {
       titleSuffix: '— Prepady Admin',
+      icons: [
+        {
+          type: 'image/x-icon',
+          rel: 'icon',
+          url: '/favicon.ico',
+        },
+      ],
     },
     components: {
       afterNavLinks: ['/src/components/admin/AdminNavLinks.tsx#AdminNavLinks'],

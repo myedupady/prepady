@@ -8,6 +8,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { SampleQuiz } from '@/components/SampleQuiz'
+import { BrandLogo } from '@/components/BrandLogo'
 import { EXAMS, examsByRegion } from '@/lib/exams'
 import { hexToRgba } from '@/lib/color'
 
@@ -76,7 +77,7 @@ export default async function HomePage() {
       <header className="sticky top-0 z-50 bg-background/90 backdrop-blur border-b border-border">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 font-display font-extrabold text-lg text-ink-900">
-            <GraduationCap className="w-6 h-6 text-gold-500" />
+            <BrandLogo className="w-7 h-7" />
             Prepady<span className="text-gold-500">.</span>
           </Link>
           <nav className="hidden sm:flex items-center gap-7 text-sm font-semibold text-muted-foreground">
