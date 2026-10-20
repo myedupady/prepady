@@ -83,6 +83,9 @@ export default async function DashboardPage() {
             Prepady<span className="text-gold-500">.</span>
           </Link>
           <div className="flex items-center gap-4">
+            <Link href="/leaderboard" className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-ink-900">
+              <Trophy className="w-4 h-4" /> Leaderboard
+            </Link>
             {isAdmin && (
               <Link href="/insights" className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-ink-900">
                 <ShieldCheck className="w-4 h-4" /> Insights

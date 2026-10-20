@@ -3,6 +3,7 @@ import { relName } from '@/lib/utils'
 import { getAuthContext } from '@/lib/auth'
 import { QuizRunner } from './QuizRunner'
 import { SubjectPicker, type SubjectGroup } from './SubjectPicker'
+import { PastYearPicker, type YearSubject } from './PastYearPicker'
 
 export const dynamic = 'force-dynamic'
 
@@ -26,23 +27,74 @@ export default async function ExamQuizPage({
   if (!exam) notFound()
   const e = exam as { code?: string; name?: string; country?: string }
   const examName = e.code ?? 'Exam'
+  const u = user as { name?: string; referralCode?: string }
+  const userName = u.name ?? null
+  const shareCode = u.referralCode ?? null
 
-  // ── Past-questions session (by year) ──────────────────────────────────────
+  // ── Past-questions (by year) ──────────────────────────────────────────────
+  // Exam → Year → Subject: a year alone shows its subjects so each paper is
+  // attempted on its own. A subject (or explicit "all") starts the session.
   if (pastYear) {
-    let subjectName: string | null = null
-    if (sp.subject) {
-      const subj = await payload.findByID({ collection: 'subjects', id: sp.subject, depth: 0 }).catch(() => null)
-      subjectName = (subj as { name?: string } | null)?.name ?? null
+    if (sp.subject || sp.all) {
+      let subjectName: string | null = null
+      if (sp.subject) {
+        const subj = await payload.findByID({ collection: 'subjects', id: sp.subject, depth: 0 }).catch(() => null)
+        subjectName = (subj as { name?: string } | null)?.name ?? null
+      }
+      return (
+        <QuizRunner
+          examId={examId}
+          examName={examName}
+          country={e.country ?? ''}
+          subjectId={sp.all ? null : sp.subject ?? null}
+          topicId={null}
+          year={pastYear}
+          userName={userName}
+          shareCode={shareCode}
+          label={`Past questions · ${pastYear}${subjectName ? ` · ${subjectName}` : sp.all ? ' · All subjects' : ''}`}
+        />
+      )
     }
+
+    // Choose a subject for this year.
+    const yrRes = await payload
+      .find({
+        collection: 'questions',
+        where: {
+          and: [
+            { exam: { equals: examId } },
+            { status: { equals: 'published' } },
+            { questionType: { equals: 'mcq' } },
+            { passage: { exists: false } },
+            { year: { equals: Number(pastYear) } },
+          ],
+        },
+        limit: 2000,
+        depth: 1,
+        overrideAccess: true,
+      })
+      .catch(() => ({ docs: [] as Array<Record<string, unknown>> }))
+
+    const bySubj = new Map<number, YearSubject>()
+    for (const q of yrRes.docs) {
+      const subj = q.subject as { id?: number } | number | null
+      const subjId = typeof subj === 'object' && subj ? subj.id : typeof subj === 'number' ? subj : undefined
+      if (!subjId) continue
+      const name = relName(q.subject) ?? `Subject ${subjId}`
+      const g = bySubj.get(subjId) ?? { id: subjId, name, count: 0 }
+      g.count++
+      bySubj.set(subjId, g)
+    }
+    const yearSubjects = [...bySubj.values()].sort((a, b) => a.name.localeCompare(b.name))
+
     return (
-      <QuizRunner
+      <PastYearPicker
         examId={examId}
         examName={examName}
         country={e.country ?? ''}
-        subjectId={sp.subject ?? null}
-        topicId={null}
-        year={pastYear}
-        label={`Past questions · ${pastYear}${subjectName ? ` · ${subjectName}` : ''}`}
+        year={Number(pastYear)}
+        subjects={yearSubjects}
+        totalCount={yrRes.docs.length}
       />
     )
   }
@@ -69,6 +121,8 @@ export default async function ExamQuizPage({
         topicId={isMock ? null : sp.topic ?? null}
         label={label}
         mode={isMock ? 'mock' : 'practice'}
+        userName={userName}
+        shareCode={shareCode}
       />
     )
   }

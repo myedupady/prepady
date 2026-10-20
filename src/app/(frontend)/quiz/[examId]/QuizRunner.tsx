@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import {
   GraduationCap, Sparkles, CheckCircle2, XCircle, ArrowRight, Loader2, RotateCcw, Lock, Clock, PlayCircle, AlarmClock, Send, MessageCircleQuestion,
+  Share2, Download, Copy, Check, Trophy,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { MathText } from '@/components/MathText'
@@ -38,6 +39,8 @@ export function QuizRunner({
   year = null,
   label,
   mode = 'practice',
+  userName = null,
+  shareCode = null,
 }: {
   examId: string
   examName: string
@@ -47,6 +50,8 @@ export function QuizRunner({
   year?: string | null
   label?: string
   mode?: 'practice' | 'mock'
+  userName?: string | null
+  shareCode?: string | null
 }) {
   const [phase, setPhase] = useState<Phase>('loading')
   const [errorMsg, setErrorMsg] = useState('')
@@ -71,6 +76,9 @@ export function QuizRunner({
   const [fuInput, setFuInput] = useState('')
   const [fuLoading, setFuLoading] = useState(false)
   const [fuLocked, setFuLocked] = useState<string | null>(null)
+  // Result sharing
+  const [copied, setCopied] = useState(false)
+  const [downloading, setDownloading] = useState(false)
 
   const start = useCallback(async () => {
     setPhase('loading')
@@ -209,6 +217,64 @@ export function QuizRunner({
     }
   }
 
+  // ── Result sharing ───────────────────────────────────────────────────────
+  const origin = typeof window !== 'undefined' ? window.location.origin : ''
+  const enc = encodeURIComponent
+  const shareStats = result?.stats ?? lastStats ?? { score: 0, maxScore: 0, percentage: 0, questionsAnswered: 0, totalQuestions: total }
+  const subjectLabel = label && !['Timed mock', 'All subjects'].includes(label) ? label : ''
+  const imgUrl = `${origin}/api/share/result?name=${enc(userName ?? '')}&pct=${shareStats.percentage}&score=${enc(String(shareStats.score))}&total=${enc(String(shareStats.maxScore))}&exam=${enc(examName)}&subject=${enc(subjectLabel)}`
+  // Shared signup link carries the referral code so shares drive sign-ups.
+  const siteUrl = origin ? (shareCode ? `${origin}/signup?ref=${shareCode}` : origin) : 'https://prepady.com'
+  const shareText = `I scored ${shareStats.percentage}% on ${examName} with Prepady 🎓 Think you can beat me?`
+  const waUrl = `https://wa.me/?text=${enc(`${shareText} ${siteUrl}`)}`
+  const xUrl = `https://twitter.com/intent/tweet?text=${enc(shareText)}&url=${enc(siteUrl)}`
+  const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${enc(siteUrl)}`
+
+  async function downloadCard() {
+    if (downloading) return
+    setDownloading(true)
+    try {
+      const res = await fetch(imgUrl)
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `prepady-${examName.toLowerCase().replace(/\s+/g, '-')}-${shareStats.percentage}pct.png`
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(url)
+    } catch {
+      window.open(imgUrl, '_blank')
+    } finally {
+      setDownloading(false)
+    }
+  }
+
+  function copyShare() {
+    navigator.clipboard?.writeText(`${shareText} ${siteUrl}`).then(
+      () => { setCopied(true); setTimeout(() => setCopied(false), 2000) },
+      () => {},
+    )
+  }
+
+  async function shareNative() {
+    try {
+      const res = await fetch(imgUrl)
+      const blob = await res.blob()
+      const file = new File([blob], 'prepady-result.png', { type: 'image/png' })
+      const nav = navigator as Navigator & { canShare?: (d?: unknown) => boolean }
+      if (nav.canShare && nav.canShare({ files: [file] })) {
+        await nav.share({ files: [file], text: shareText, url: siteUrl } as ShareData)
+        return
+      }
+      if (nav.share) { await nav.share({ text: shareText, url: siteUrl }); return }
+    } catch {
+      /* user cancelled or unsupported → fall through */
+    }
+    copyShare()
+  }
+
   // ── Shells ─────────────────────────────────────────────────────────────────
   const Shell = ({ children }: { children: React.ReactNode }) => (
     <main className="min-h-screen bg-background">
@@ -263,10 +329,37 @@ export function QuizRunner({
           <p className="text-muted-foreground text-sm mt-1 mb-7">
             You scored {s.score} of {s.maxScore} on {examName}{label ? ` · ${label}` : ''}.
           </p>
+
+          {/* Shareable result card */}
+          <div className="rounded-2xl border border-border bg-background p-4 mb-6 text-left">
+            <p className="flex items-center gap-1.5 text-xs font-black uppercase tracking-widest text-muted-foreground mb-3">
+              <Share2 className="w-3.5 h-3.5" /> Share your result
+            </p>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={imgUrl} alt="Your result card" className="w-full rounded-xl border border-border mb-3" />
+            <div className="flex flex-wrap gap-2">
+              <Button onClick={shareNative} variant="accent" size="sm" className="rounded-lg font-black">
+                <Share2 className="w-4 h-4" /> Share
+              </Button>
+              <Button onClick={downloadCard} disabled={downloading} variant="outline" size="sm" className="rounded-lg font-bold">
+                {downloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />} Download
+              </Button>
+              <Button onClick={copyShare} variant="outline" size="sm" className="rounded-lg font-bold">
+                {copied ? <><Check className="w-4 h-4 text-success" /> Copied</> : <><Copy className="w-4 h-4" /> Copy link</>}
+              </Button>
+              <a href={waUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3 h-9 rounded-lg border border-border bg-background text-xs font-bold text-ink-900 hover:border-ink-900 transition-colors">WhatsApp</a>
+              <a href={xUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3 h-9 rounded-lg border border-border bg-background text-xs font-bold text-ink-900 hover:border-ink-900 transition-colors">X</a>
+              <a href={fbUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3 h-9 rounded-lg border border-border bg-background text-xs font-bold text-ink-900 hover:border-ink-900 transition-colors">Facebook</a>
+            </div>
+          </div>
+
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Button onClick={start} variant="accent" className="rounded-xl font-black"><RotateCcw className="w-4 h-4" /> Practise again</Button>
             <Button asChild variant="outline" className="rounded-xl font-black"><Link href={`/quiz/${examId}`}>Choose another</Link></Button>
           </div>
+          <Link href="/leaderboard" className="mt-5 inline-flex items-center gap-1.5 text-sm font-bold text-gold-700 hover:text-gold-800">
+            <Trophy className="w-4 h-4" /> See where you rank this week
+          </Link>
         </div>
       </Shell>
     )
