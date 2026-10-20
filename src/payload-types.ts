@@ -469,6 +469,10 @@ export interface QuizSession {
    * Single-topic focus, or blank for a whole-subject/mixed session.
    */
   topicRef?: (number | null) | Topic;
+  /**
+   * Set for a past-questions session (serves only that year). Blank = simulated practice.
+   */
+  pastYear?: number | null;
   mode?: ('practice' | 'mock') | null;
   status: 'active' | 'completed' | 'abandoned';
   totalQuestions: number;
@@ -762,6 +766,7 @@ export interface QuizSessionsSelect<T extends boolean = true> {
   exam?: T;
   subject?: T;
   topicRef?: T;
+  pastYear?: T;
   mode?: T;
   status?: T;
   totalQuestions?: T;

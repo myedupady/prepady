@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { GraduationCap, ArrowLeft, Sparkles, PenLine, ChevronRight, Layers, Timer } from 'lucide-react'
+import { GraduationCap, ArrowLeft, Sparkles, PenLine, ChevronRight, Layers, Timer, CalendarClock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 export interface TopicCount {
@@ -24,12 +24,14 @@ export function SubjectPicker({
   examName,
   country,
   subjects,
+  years,
   theoryCount,
 }: {
   examId: string
   examName: string
   country: string
   subjects: SubjectGroup[]
+  years: { year: number; count: number }[]
   theoryCount: number
 }) {
   const totalMcq = subjects.reduce((n, s) => n + s.count, 0)
@@ -52,7 +54,7 @@ export function SubjectPicker({
         <h1 className="font-display text-3xl font-extrabold text-ink-900 mb-1">Choose what to practise</h1>
         <p className="text-muted-foreground mb-8">Pick a subject, drill a single topic, or practise everything at once.</p>
 
-        {totalMcq === 0 ? (
+        {totalMcq === 0 && years.length === 0 && theoryCount === 0 ? (
           <div className="rounded-3xl border border-dashed border-border bg-card p-10 text-center">
             <Layers className="w-9 h-9 text-gold-400 mx-auto mb-3" />
             <p className="font-display text-xl font-extrabold text-ink-900 mb-1">No questions yet for {examName}</p>
@@ -61,6 +63,8 @@ export function SubjectPicker({
           </div>
         ) : (
           <>
+            {totalMcq > 0 && (
+            <>
             {/* Quick start: all subjects */}
             <Link
               href={`/quiz/${examId}?all=1`}
@@ -126,6 +130,27 @@ export function SubjectPicker({
                 </div>
               ))}
             </div>
+            </>
+            )}
+
+            {/* Past questions by year */}
+            {years.length > 0 && (
+              <div className="rounded-2xl border border-border bg-card p-5 mt-2">
+                <p className="flex items-center gap-1.5 font-black text-ink-900 mb-1"><CalendarClock className="w-4 h-4 text-gold-600" /> Past questions by year</p>
+                <p className="text-xs text-muted-foreground mb-3">Real past papers — pick a year to attempt it.</p>
+                <div className="flex flex-wrap gap-2">
+                  {years.map((y) => (
+                    <Link
+                      key={y.year}
+                      href={`/quiz/${examId}?year=${y.year}`}
+                      className="text-sm font-bold px-3.5 py-2 rounded-xl border border-border bg-background hover:border-ink-900 hover:bg-ink-50 text-ink-900 transition-colors"
+                    >
+                      {y.year} <span className="text-gray-400 font-medium">· {y.count}</span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
           </>
         )}
 

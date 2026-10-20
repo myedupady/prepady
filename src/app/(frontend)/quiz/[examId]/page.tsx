@@ -11,11 +11,12 @@ export default async function ExamQuizPage({
   searchParams,
 }: {
   params: Promise<{ examId: string }>
-  searchParams: Promise<{ subject?: string; topic?: string; all?: string; mock?: string }>
+  searchParams: Promise<{ subject?: string; topic?: string; all?: string; mock?: string; year?: string }>
 }) {
   const { examId } = await params
   const sp = await searchParams
   const isMock = sp.mock === '1'
+  const pastYear = sp.year && /^\d{4}$/.test(sp.year) ? sp.year : null
 
   // Gate: must be logged in (strict — same check the API routes use).
   const { payload, user } = await getAuthContext()
@@ -25,6 +26,26 @@ export default async function ExamQuizPage({
   if (!exam) notFound()
   const e = exam as { code?: string; name?: string; country?: string }
   const examName = e.code ?? 'Exam'
+
+  // ── Past-questions session (by year) ──────────────────────────────────────
+  if (pastYear) {
+    let subjectName: string | null = null
+    if (sp.subject) {
+      const subj = await payload.findByID({ collection: 'subjects', id: sp.subject, depth: 0 }).catch(() => null)
+      subjectName = (subj as { name?: string } | null)?.name ?? null
+    }
+    return (
+      <QuizRunner
+        examId={examId}
+        examName={examName}
+        country={e.country ?? ''}
+        subjectId={sp.subject ?? null}
+        topicId={null}
+        year={pastYear}
+        label={`Past questions · ${pastYear}${subjectName ? ` · ${subjectName}` : ''}`}
+      />
+    )
+  }
 
   // ── Run a session when a subject/topic, "all", or mock is chosen ───────────
   if (sp.subject || sp.all || isMock) {
@@ -72,9 +93,16 @@ export default async function ExamQuizPage({
       .catch(() => ({ totalDocs: 0 })),
   ])
 
-  // Aggregate by subject → topic.
+  // Aggregate by subject → topic (simulated questions only), and collect the
+  // distinct years available as past-question papers.
   const bySubject = new Map<number, SubjectGroup>()
+  const yearMap = new Map<number, number>()
   for (const q of mcqRes.docs) {
+    const qYear = typeof q.year === 'number' ? q.year : null
+    if (qYear) {
+      yearMap.set(qYear, (yearMap.get(qYear) ?? 0) + 1)
+      continue // past question → shown under "Past questions", not practice
+    }
     const subj = q.subject as { id?: number } | number | null
     const subjId = typeof subj === 'object' && subj ? subj.id : typeof subj === 'number' ? subj : undefined
     if (!subjId) continue
@@ -101,6 +129,7 @@ export default async function ExamQuizPage({
 
   const subjects = [...bySubject.values()].sort((a, b) => a.name.localeCompare(b.name))
   for (const s of subjects) s.topics.sort((a, b) => a.name.localeCompare(b.name))
+  const years = [...yearMap.entries()].map(([year, count]) => ({ year, count })).sort((a, b) => b.year - a.year)
 
   return (
     <SubjectPicker
@@ -108,6 +137,7 @@ export default async function ExamQuizPage({
       examName={examName}
       country={e.country ?? ''}
       subjects={subjects}
+      years={years}
       theoryCount={(theoryRes as { totalDocs?: number }).totalDocs ?? 0}
     />
   )

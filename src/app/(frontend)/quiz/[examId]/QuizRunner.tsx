@@ -35,6 +35,7 @@ export function QuizRunner({
   country,
   subjectId = null,
   topicId = null,
+  year = null,
   label,
   mode = 'practice',
 }: {
@@ -43,6 +44,7 @@ export function QuizRunner({
   country: string
   subjectId?: string | null
   topicId?: string | null
+  year?: string | null
   label?: string
   mode?: 'practice' | 'mock'
 }) {
@@ -79,7 +81,7 @@ export function QuizRunner({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ examId, subjectId, topicId, mode }),
+        body: JSON.stringify({ examId, subjectId, topicId, mode, year }),
       })
       const data = await r.json()
       if (r.status === 401) { window.location.href = `/login?redirect=/quiz/${examId}`; return }
@@ -98,7 +100,7 @@ export function QuizRunner({
       setErrorMsg('Could not start the quiz. Please try again.')
       setPhase('error')
     }
-  }, [examId, subjectId, topicId, mode])
+  }, [examId, subjectId, topicId, mode, year])
 
   // Mock countdown — tick every second; complete when time runs out.
   useEffect(() => {

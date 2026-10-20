@@ -18,14 +18,16 @@ export async function POST(req: NextRequest) {
     if (!user) return NextResponse.json({ error: 'You must be logged in.' }, { status: 401 })
 
     const body = await req.json().catch(() => ({}))
-    const { examId, subjectId, topicId, mode } = body as {
+    const { examId, subjectId, topicId, mode, year } = body as {
       examId?: number | string
       subjectId?: number | string
       topicId?: number | string
       mode?: 'practice' | 'mock'
+      year?: number | string
     }
     if (!examId) return NextResponse.json({ error: 'examId is required.' }, { status: 400 })
     const isMock = mode === 'mock'
+    const pastYear = year ? Number(year) : null
 
     // Abandon any existing active session for this user + exam.
     const existing = await payload.find({
@@ -43,6 +45,8 @@ export async function POST(req: NextRequest) {
       { questionType: { equals: 'mcq' } },
       ...(subjectId ? [{ subject: { equals: subjectId } } as Where] : []),
       ...(topicId ? [{ topicRef: { equals: topicId } } as Where] : []),
+      // Past-questions mode → only that year; practice → only simulated (no year).
+      ...(pastYear ? [{ year: { equals: pastYear } } as Where] : [{ year: { exists: false } } as Where]),
     ]
 
     const pool = await payload.find({ collection: 'questions', where: { and: baseClauses }, limit: 200, depth: 0 })
@@ -65,6 +69,7 @@ export async function POST(req: NextRequest) {
         exam: String(examId),
         subject: subjectId ? Number(subjectId) : undefined,
         topicRef: topicId ? Number(topicId) : undefined,
+        pastYear: pastYear ?? undefined,
         mode: isMock ? 'mock' : 'practice',
         status: 'active',
         totalQuestions,

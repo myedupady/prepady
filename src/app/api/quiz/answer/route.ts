@@ -74,6 +74,11 @@ export async function POST(req: NextRequest) {
         session.topicRef != null
           ? [{ topicRef: { equals: (session.topicRef as { id?: number })?.id ?? session.topicRef } } as Where]
           : []
+      // Keep a past-questions session on its year; keep practice on simulated (no year).
+      const yearClause: Where[] =
+        session.pastYear != null
+          ? [{ year: { equals: session.pastYear } } as Where]
+          : [{ year: { exists: false } } as Where]
       const tryDiffs: Difficulty[] = [newDiff]
       if (newDiff > 1) tryDiffs.push((newDiff - 1) as Difficulty)
       if (newDiff < 3) tryDiffs.push((newDiff + 1) as Difficulty)
@@ -89,6 +94,7 @@ export async function POST(req: NextRequest) {
               { difficulty: { equals: String(diff) } },
               ...subjectClause,
               ...topicClause,
+              ...yearClause,
             ],
           },
           limit: 50,
@@ -112,6 +118,7 @@ export async function POST(req: NextRequest) {
               { questionType: { equals: 'mcq' } },
               ...subjectClause,
               ...topicClause,
+              ...yearClause,
             ],
           },
           limit: 100,

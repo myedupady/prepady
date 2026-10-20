@@ -42,6 +42,11 @@ export const QuizSessions: CollectionConfig = {
       admin: { position: 'sidebar', description: 'Single-topic focus, or blank for a whole-subject/mixed session.' },
     },
     {
+      name: 'pastYear',
+      type: 'number',
+      admin: { position: 'sidebar', description: 'Set for a past-questions session (serves only that year). Blank = simulated practice.' },
+    },
+    {
       name: 'mode',
       type: 'select',
       defaultValue: 'practice',
