@@ -51,6 +51,16 @@ export const Questions: CollectionConfig = {
       },
     },
     {
+      name: 'passage',
+      type: 'relationship',
+      relationTo: 'passages',
+      label: 'Comprehension passage',
+      admin: {
+        position: 'sidebar',
+        description: 'Link a passage to make this a comprehension question. These are shown in the Comprehension flow, not normal practice.',
+      },
+    },
+    {
       // Legacy free-text topic, superseded by `topicRef`. Kept (hidden) so old
       // rows keep their value and the migration stays non-destructive; readers
       // fall back to it when a Topic relationship isn't set.

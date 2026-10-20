@@ -1,6 +1,7 @@
 import Link from 'next/link'
-import { GraduationCap, ArrowLeft, Sparkles, PenLine, ChevronRight, Layers, Timer, CalendarClock } from 'lucide-react'
+import { GraduationCap, ArrowLeft, Sparkles, PenLine, ChevronRight, Layers, Timer, CalendarClock, BookOpenText } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { LinkSpinner } from '@/components/LinkSpinner'
 
 export interface TopicCount {
   id: number
@@ -26,6 +27,7 @@ export function SubjectPicker({
   subjects,
   years,
   theoryCount,
+  passagesCount = 0,
 }: {
   examId: string
   examName: string
@@ -33,6 +35,7 @@ export function SubjectPicker({
   subjects: SubjectGroup[]
   years: { year: number; count: number }[]
   theoryCount: number
+  passagesCount?: number
 }) {
   const totalMcq = subjects.reduce((n, s) => n + s.count, 0)
 
@@ -54,7 +57,7 @@ export function SubjectPicker({
         <h1 className="font-display text-3xl font-extrabold text-ink-900 mb-1">Choose what to practise</h1>
         <p className="text-muted-foreground mb-8">Pick a subject, drill a single topic, or practise everything at once.</p>
 
-        {totalMcq === 0 && years.length === 0 && theoryCount === 0 ? (
+        {totalMcq === 0 && years.length === 0 && theoryCount === 0 && passagesCount === 0 ? (
           <div className="rounded-3xl border border-dashed border-border bg-card p-10 text-center">
             <Layers className="w-9 h-9 text-gold-400 mx-auto mb-3" />
             <p className="font-display text-xl font-extrabold text-ink-900 mb-1">No questions yet for {examName}</p>
@@ -79,7 +82,7 @@ export function SubjectPicker({
                   <p className="text-xs text-muted-foreground">Adaptive mix across every subject ({totalMcq} question{totalMcq === 1 ? '' : 's'}).</p>
                 </div>
               </div>
-              <ChevronRight className="w-5 h-5 text-muted-foreground shrink-0" />
+              <LinkSpinner idle={<ChevronRight className="w-5 h-5 text-muted-foreground shrink-0" />} />
             </Link>
 
             {/* Timed mock */}
@@ -96,7 +99,7 @@ export function SubjectPicker({
                   <p className="text-xs text-muted-foreground">A CBT-style run against the clock, mixed across subjects.</p>
                 </div>
               </div>
-              <ChevronRight className="w-5 h-5 text-muted-foreground shrink-0" />
+              <LinkSpinner idle={<ChevronRight className="w-5 h-5 text-muted-foreground shrink-0" />} />
             </Link>
 
             {/* Subjects */}
@@ -154,6 +157,25 @@ export function SubjectPicker({
           </>
         )}
 
+        {/* Comprehension entry */}
+        {passagesCount > 0 && (
+          <Link
+            href={`/comprehension/${examId}`}
+            className="mt-6 flex items-center justify-between gap-4 rounded-2xl border border-gold-200 bg-gold-50/60 p-5 hover:shadow-brand transition-shadow"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gold-100 flex items-center justify-center shrink-0">
+                <BookOpenText className="w-5 h-5 text-gold-700" />
+              </div>
+              <div>
+                <p className="font-black text-ink-900">Comprehension</p>
+                <p className="text-xs text-muted-foreground">Read a passage and answer the questions that follow ({passagesCount} passage{passagesCount === 1 ? '' : 's'}).</p>
+              </div>
+            </div>
+            <LinkSpinner idle={<ChevronRight className="w-5 h-5 text-muted-foreground shrink-0" />} />
+          </Link>
+        )}
+
         {/* Theory practice entry */}
         {theoryCount > 0 && (
           <Link
@@ -169,7 +191,7 @@ export function SubjectPicker({
                 <p className="text-xs text-muted-foreground">Write answers and get AI marking against the scheme ({theoryCount} question{theoryCount === 1 ? '' : 's'}).</p>
               </div>
             </div>
-            <ChevronRight className="w-5 h-5 text-muted-foreground shrink-0" />
+            <LinkSpinner idle={<ChevronRight className="w-5 h-5 text-muted-foreground shrink-0" />} />
           </Link>
         )}
       </div>

@@ -73,6 +73,7 @@ export interface Config {
     exams: Exam;
     subjects: Subject;
     topics: Topic;
+    passages: Passage;
     questions: Question;
     'quiz-sessions': QuizSession;
     'payload-kv': PayloadKv;
@@ -88,6 +89,7 @@ export interface Config {
     exams: ExamsSelect<false> | ExamsSelect<true>;
     subjects: SubjectsSelect<false> | SubjectsSelect<true>;
     topics: TopicsSelect<false> | TopicsSelect<true>;
+    passages: PassagesSelect<false> | PassagesSelect<true>;
     questions: QuestionsSelect<false> | QuestionsSelect<true>;
     'quiz-sessions': QuizSessionsSelect<false> | QuizSessionsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -162,6 +164,18 @@ export interface User {
    */
   markUsesToday?: number | null;
   markUsesResetAt?: string | null;
+  /**
+   * The user’s own code to share.
+   */
+  referralCode?: string | null;
+  /**
+   * Referral code this user signed up with.
+   */
+  referredBy?: string | null;
+  /**
+   * Successful referrals.
+   */
+  referralCount?: number | null;
   /**
    * Set when the user confirms their email. Admins can toggle manually.
    */
@@ -379,6 +393,43 @@ export interface Topic {
   createdAt: string;
 }
 /**
+ * Reading passages for comprehension. Attach questions to a passage via the question’s "Passage" field.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "passages".
+ */
+export interface Passage {
+  id: number;
+  /**
+   * e.g. "Passage 1 — The Rainforest".
+   */
+  title: string;
+  exam: number | Exam;
+  /**
+   * Usually English Language.
+   */
+  subject?: (number | null) | Subject;
+  status: 'draft' | 'published';
+  /**
+   * Optional — for a past-paper comprehension.
+   */
+  year?: number | null;
+  /**
+   * Lower numbers appear first.
+   */
+  order?: number | null;
+  /**
+   * Optional, e.g. "Read the passage and answer the questions that follow."
+   */
+  instructions?: string | null;
+  /**
+   * The reading passage shown to students above the questions.
+   */
+  passage: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * Past questions and practice items. MCQs are adaptive & auto-graded; theory questions are AI-marked.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -395,6 +446,10 @@ export interface Question {
    * Pick or create a Topic (under the matching Subject), e.g. "Quadratic Equations". Used for gap detection.
    */
   topicRef?: (number | null) | Topic;
+  /**
+   * Link a passage to make this a comprehension question. These are shown in the Comprehension flow, not normal practice.
+   */
+  passage?: (number | null) | Passage;
   topic?: string | null;
   /**
    * Served adaptively: easy → medium → hard.
@@ -574,6 +629,10 @@ export interface PayloadLockedDocument {
         value: number | Topic;
       } | null)
     | ({
+        relationTo: 'passages';
+        value: number | Passage;
+      } | null)
+    | ({
         relationTo: 'questions';
         value: number | Question;
       } | null)
@@ -637,6 +696,9 @@ export interface UsersSelect<T extends boolean = true> {
   aiUsesResetAt?: T;
   markUsesToday?: T;
   markUsesResetAt?: T;
+  referralCode?: T;
+  referredBy?: T;
+  referralCount?: T;
   emailVerified?: T;
   emailVerifyToken?: T;
   emailVerifyExpiry?: T;
@@ -728,12 +790,29 @@ export interface TopicsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "passages_select".
+ */
+export interface PassagesSelect<T extends boolean = true> {
+  title?: T;
+  exam?: T;
+  subject?: T;
+  status?: T;
+  year?: T;
+  order?: T;
+  instructions?: T;
+  passage?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "questions_select".
  */
 export interface QuestionsSelect<T extends boolean = true> {
   exam?: T;
   subject?: T;
   topicRef?: T;
+  passage?: T;
   topic?: T;
   difficulty?: T;
   year?: T;

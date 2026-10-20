@@ -74,11 +74,18 @@ export default async function ExamQuizPage({
   }
 
   // ── Otherwise show the subject/topic picker ────────────────────────────────
-  const [mcqRes, theoryRes] = await Promise.all([
+  const [mcqRes, theoryRes, passagesRes] = await Promise.all([
     payload
       .find({
         collection: 'questions',
-        where: { and: [{ exam: { equals: examId } }, { status: { equals: 'published' } }, { questionType: { equals: 'mcq' } }] },
+        where: {
+          and: [
+            { exam: { equals: examId } },
+            { status: { equals: 'published' } },
+            { questionType: { equals: 'mcq' } },
+            { passage: { exists: false } }, // comprehension questions live in their own flow
+          ],
+        },
         limit: 2000,
         depth: 1,
         overrideAccess: true,
@@ -88,6 +95,13 @@ export default async function ExamQuizPage({
       .count({
         collection: 'questions',
         where: { and: [{ exam: { equals: examId } }, { status: { equals: 'published' } }, { questionType: { equals: 'theory' } }] },
+        overrideAccess: true,
+      })
+      .catch(() => ({ totalDocs: 0 })),
+    payload
+      .count({
+        collection: 'passages',
+        where: { and: [{ exam: { equals: examId } }, { status: { equals: 'published' } }] },
         overrideAccess: true,
       })
       .catch(() => ({ totalDocs: 0 })),
@@ -139,6 +153,7 @@ export default async function ExamQuizPage({
       subjects={subjects}
       years={years}
       theoryCount={(theoryRes as { totalDocs?: number }).totalDocs ?? 0}
+      passagesCount={(passagesRes as { totalDocs?: number }).totalDocs ?? 0}
     />
   )
 }

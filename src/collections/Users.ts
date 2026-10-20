@@ -1,3 +1,4 @@
+import crypto from 'crypto'
 import type { CollectionBeforeChangeHook, CollectionConfig } from 'payload'
 
 /**
@@ -8,6 +9,14 @@ const promoteFirstUserToAdmin: CollectionBeforeChangeHook = async ({ data, opera
   if (operation === 'create') {
     const { totalDocs } = await req.payload.count({ collection: 'users' })
     if (totalDocs === 0) data.role = 'admin'
+  }
+  return data
+}
+
+/** Give every new user a unique referral code. */
+const assignReferralCode: CollectionBeforeChangeHook = ({ data, operation }) => {
+  if (operation === 'create' && !data.referralCode) {
+    data.referralCode = crypto.randomBytes(5).toString('hex').toUpperCase().slice(0, 8)
   }
   return data
 }
@@ -54,7 +63,7 @@ export const Users: CollectionConfig = {
       },
     },
   },
-  hooks: { beforeChange: [promoteFirstUserToAdmin] },
+  hooks: { beforeChange: [promoteFirstUserToAdmin, assignReferralCode] },
   admin: {
     useAsTitle: 'email',
     defaultColumns: ['name', 'email', 'role', 'plan', 'subscriptionExpiresAt'],
@@ -156,6 +165,28 @@ export const Users: CollectionConfig = {
       type: 'date',
       access: { update: ({ req }) => req.user?.role === 'admin' },
       admin: { position: 'sidebar', readOnly: true },
+    },
+    // ── Referrals ─────────────────────────────────────────────────────────────
+    {
+      name: 'referralCode',
+      type: 'text',
+      unique: true,
+      index: true,
+      access: { update: ({ req }) => req.user?.role === 'admin' },
+      admin: { position: 'sidebar', readOnly: true, description: 'The user’s own code to share.' },
+    },
+    {
+      name: 'referredBy',
+      type: 'text',
+      access: { update: ({ req }) => req.user?.role === 'admin' },
+      admin: { position: 'sidebar', readOnly: true, description: 'Referral code this user signed up with.' },
+    },
+    {
+      name: 'referralCount',
+      type: 'number',
+      defaultValue: 0,
+      access: { update: ({ req }) => req.user?.role === 'admin' },
+      admin: { position: 'sidebar', readOnly: true, description: 'Successful referrals.' },
     },
     // ── Email verification (gates live AI when AI_REQUIRE_VERIFIED_EMAIL=true) ──
     {

@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { LogoutButton } from '@/components/LogoutButton'
 import { RadialProgress, BarList, TrendChart, type BarItem } from '@/components/charts/Charts'
+import { ReferralCard } from '@/components/ReferralCard'
+import { REFERRAL_REWARD_DAYS } from '@/lib/subscription'
 
 export const metadata: Metadata = { title: 'Dashboard — Prepady' }
 export const dynamic = 'force-dynamic'
@@ -61,7 +63,7 @@ export default async function DashboardPage() {
     .slice(0, 5)
   const totalAnswered = [...subj.values()].reduce((a, m) => a + m.t, 0)
 
-  const u = user as { name?: string; email?: string; plan?: string; role?: string }
+  const u = user as { name?: string; email?: string; plan?: string; role?: string; referralCode?: string; referralCount?: number }
   const firstName = u.name?.split(' ')[0] ?? 'there'
   const premium = u.plan === 'premium'
   const isAdmin = u.role === 'admin'
@@ -160,6 +162,13 @@ export default async function DashboardPage() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Referral */}
+        {u.referralCode && (
+          <div className="mb-8">
+            <ReferralCard code={u.referralCode} count={u.referralCount ?? 0} rewardDays={REFERRAL_REWARD_DAYS} />
+          </div>
+        )}
 
         {/* Start practising */}
         <Card className="border border-border bg-card shadow-brand mb-8">

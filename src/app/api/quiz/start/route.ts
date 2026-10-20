@@ -43,6 +43,8 @@ export async function POST(req: NextRequest) {
       { exam: { equals: examId } },
       { status: { equals: 'published' } },
       { questionType: { equals: 'mcq' } },
+      { passage: { exists: false } }, // comprehension questions are served via the passage flow
+
       ...(subjectId ? [{ subject: { equals: subjectId } } as Where] : []),
       ...(topicId ? [{ topicRef: { equals: topicId } } as Where] : []),
       // Past-questions mode → only that year; practice → only simulated (no year).

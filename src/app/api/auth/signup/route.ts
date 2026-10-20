@@ -5,6 +5,7 @@ import configPromise from '@payload-config'
 import { verifyTurnstile } from '@/lib/turnstile'
 import { clientIp } from '@/lib/rate-limit'
 import { generateVerifyToken, sendVerificationEmail, VERIFY_TOKEN_TTL_MS } from '@/lib/email-verify'
+import { grantPremiumDays, REFERRAL_REWARD_DAYS } from '@/lib/subscription'
 
 /**
  * POST /api/auth/signup  Body: { name, email, password, turnstileToken? }
@@ -17,12 +18,14 @@ import { generateVerifyToken, sendVerificationEmail, VERIFY_TOKEN_TTL_MS } from 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => ({}))
-    const { name, email, password, turnstileToken } = body as {
+    const { name, email, password, turnstileToken, ref } = body as {
       name?: string
       email?: string
       password?: string
       turnstileToken?: string
+      ref?: string
     }
+    const referralCode = (ref || '').trim().toUpperCase() || null
 
     const cleanEmail = (email ?? '').trim().toLowerCase()
     const cleanName = (name ?? '').trim()
@@ -52,6 +55,7 @@ export async function POST(req: NextRequest) {
           emailVerified: false,
           emailVerifyToken: token,
           emailVerifyExpiry: new Date(Date.now() + VERIFY_TOKEN_TTL_MS).toISOString(),
+          ...(referralCode ? { referredBy: referralCode } : {}),
         } as unknown as RequiredDataFromCollectionSlug<'users'>,
       })
     } catch {
@@ -64,6 +68,30 @@ export async function POST(req: NextRequest) {
 
     // Fire the verification email (non-fatal).
     await sendVerificationEmail(payload, { to: cleanEmail, name: cleanName, token })
+
+    // Credit the referrer (non-fatal): +1 count and a premium bonus.
+    if (referralCode) {
+      try {
+        const ref = await payload.find({
+          collection: 'users',
+          where: { referralCode: { equals: referralCode } },
+          limit: 1,
+          overrideAccess: true,
+        })
+        const referrer = ref.docs[0] as { id: number | string; email?: string; referralCount?: number } | undefined
+        if (referrer && referrer.email !== cleanEmail) {
+          await payload.update({
+            collection: 'users',
+            id: referrer.id,
+            overrideAccess: true,
+            data: { referralCount: (referrer.referralCount ?? 0) + 1 } as Record<string, unknown>,
+          })
+          await grantPremiumDays(payload, { userId: referrer.id, days: REFERRAL_REWARD_DAYS })
+        }
+      } catch (err) {
+        console.warn('[signup] referral credit failed (non-fatal):', err)
+      }
+    }
 
     return NextResponse.json({ ok: true })
   } catch (err) {

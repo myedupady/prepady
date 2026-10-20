@@ -53,7 +53,13 @@ export default function SignupPage() {
       const createRes = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name.trim(), email: cleanEmail, password, turnstileToken: captchaToken }),
+        body: JSON.stringify({
+          name: name.trim(),
+          email: cleanEmail,
+          password,
+          turnstileToken: captchaToken,
+          ref: new URLSearchParams(window.location.search).get('ref') || undefined,
+        }),
       })
       if (!createRes.ok) {
         const data = await createRes.json().catch(() => ({}))

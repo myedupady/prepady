@@ -14,6 +14,7 @@ import { Regions } from './collections/Regions'
 import { Exams } from './collections/Exams'
 import { Subjects } from './collections/Subjects'
 import { Topics } from './collections/Topics'
+import { Passages } from './collections/Passages'
 import { Questions } from './collections/Questions'
 import { QuizSessions } from './collections/QuizSessions'
 import { Theme } from './globals/Theme'
@@ -80,9 +81,10 @@ export default buildConfig({
     },
     components: {
       afterNavLinks: ['/src/components/admin/AdminNavLinks.tsx#AdminNavLinks'],
+      beforeDashboard: ['/src/components/admin/AdminDashboard.tsx#AdminDashboard'],
     },
   },
-  collections: [Users, Media, Regions, Exams, Subjects, Topics, Questions, QuizSessions],
+  collections: [Users, Media, Regions, Exams, Subjects, Topics, Passages, Questions, QuizSessions],
   globals: [Theme, AIControls],
   editor: lexicalEditor({}),
   email: payloadEmailAdapter(),
