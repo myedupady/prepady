@@ -15,21 +15,54 @@ export const metadata: Metadata = { title: 'Dashboard — Prepady' }
 export const dynamic = 'force-dynamic'
 
 interface AnswerLog { isCorrect?: boolean; subjectName?: string | null; topicName?: string | null }
-interface Session { status?: string; score?: number; maxScore?: number; mode?: string; answers?: AnswerLog[] }
+interface Session {
+  status?: string; score?: number; maxScore?: number; mode?: string; answers?: AnswerLog[]
+  completedAt?: string; startedAt?: string
+  subject?: { id?: number; name?: string } | number | null
+}
 
 const pctOf = (s: Session) => (s.maxScore ? Math.round((Number(s.score) / Number(s.maxScore)) * 100) : 0)
 const bandTone = (pct: number): BarItem['tone'] => (pct >= 75 ? 'good' : pct >= 50 ? 'fair' : 'weak')
 
-export default async function DashboardPage() {
+type Range = 'all' | 'week' | 'month' | 'year'
+function rangeStart(range: Range): Date | null {
+  const now = new Date()
+  if (range === 'week') { const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())); d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7)); return d }
+  if (range === 'month') return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1))
+  if (range === 'year') return new Date(Date.UTC(now.getUTCFullYear(), 0, 1))
+  return null
+}
+
+export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ range?: string; subject?: string }> }) {
   const { payload, user } = await getAuthContext()
   if (!user) redirect('/login?redirect=/dashboard')
   const userId = user.id
+  const sp = await searchParams
+  const range: Range = sp.range === 'week' || sp.range === 'month' || sp.range === 'year' ? sp.range : 'all'
+  const subjectFilter = sp.subject && /^\d+$/.test(sp.subject) ? sp.subject : null
+  const since = rangeStart(range)
 
   const sessionsRes = await payload
-    .find({ collection: 'quiz-sessions', where: { user: { equals: userId } }, sort: '-startedAt', limit: 50, depth: 0, overrideAccess: true })
+    .find({ collection: 'quiz-sessions', where: { user: { equals: userId } }, sort: '-startedAt', limit: 300, depth: 1, overrideAccess: true })
     .catch(() => ({ docs: [] as Session[] }))
-  const sessions = sessionsRes.docs as Session[]
-  const completed = sessions.filter((s) => s.status === 'completed')
+  const allSessions = sessionsRes.docs as Session[]
+
+  // Subjects the student has practised (for the trend filter pills).
+  const subjOptions = new Map<string, string>()
+  for (const s of allSessions) {
+    const subj = s.subject
+    if (subj && typeof subj === 'object' && subj.id) subjOptions.set(String(subj.id), subj.name ?? `Subject ${subj.id}`)
+  }
+
+  // Apply the timeframe filter to everything shown below.
+  const subjId = (s: Session) => (s.subject && typeof s.subject === 'object' ? String(s.subject.id ?? '') : s.subject != null ? String(s.subject) : '')
+  const sessions = allSessions.filter((s) => {
+    if (since) { const t = s.completedAt || s.startedAt; if (!t || new Date(t) < since) return false }
+    return true
+  })
+  const completedAll = sessions.filter((s) => s.status === 'completed')
+  // The trend/average also honour the subject filter (so it doesn't get long).
+  const completed = subjectFilter ? completedAll.filter((s) => subjId(s) === subjectFilter) : completedAll
   const avg = completed.length ? Math.round(completed.reduce((a, s) => a + pctOf(s), 0) / completed.length) : 0
   const trend = [...completed].reverse().map(pctOf).slice(-12)
 
@@ -68,10 +101,24 @@ export default async function DashboardPage() {
   const isAdmin = u.role === 'admin'
 
   const stats = [
-    { label: 'Quizzes completed', value: String(completed.length), icon: CheckCircle2 },
+    { label: 'Quizzes completed', value: String(completedAll.length), icon: CheckCircle2 },
     { label: 'Questions answered', value: String(totalAnswered), icon: Target },
     { label: 'Plan', value: premium ? 'Premium' : 'Free', icon: Trophy },
   ]
+
+  // Trend filter links (preserve the other param).
+  const subjOpts = [...subjOptions.entries()].sort((a, b) => a[1].localeCompare(b[1]))
+  const trendQs = (over: { range?: Range; subject?: string | undefined }) => {
+    const p = new URLSearchParams()
+    const r = over.range ?? range
+    const sj = 'subject' in over ? over.subject : subjectFilter ?? undefined
+    if (r && r !== 'all') p.set('range', r)
+    if (sj) p.set('subject', sj)
+    const s = p.toString()
+    return s ? `/dashboard?${s}` : '/dashboard'
+  }
+  const fpill = (active: boolean) =>
+    `px-3 py-1.5 rounded-lg text-xs font-black border-2 transition-colors whitespace-nowrap ${active ? 'border-ink-900 bg-ink-900 text-gold-400' : 'border-border bg-card text-ink-900 hover:border-ink-900'}`
 
   return (
     <main className="min-h-screen bg-background">
@@ -132,6 +179,25 @@ export default async function DashboardPage() {
             </div>
           </Link>
         )}
+
+        {/* Progress filters */}
+        <div className="mb-4 space-y-2">
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            {(['all', 'week', 'month', 'year'] as const).map((r) => (
+              <Link key={r} href={trendQs({ range: r })} className={fpill(range === r)}>
+                {r === 'all' ? 'All time' : r === 'week' ? 'This week' : r === 'month' ? 'This month' : 'This year'}
+              </Link>
+            ))}
+          </div>
+          {subjOpts.length > 0 && (
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              <Link href={trendQs({ subject: undefined })} className={fpill(!subjectFilter)}>All subjects</Link>
+              {subjOpts.map(([id, name]) => (
+                <Link key={id} href={trendQs({ subject: id })} className={fpill(subjectFilter === id)}>{name}</Link>
+              ))}
+            </div>
+          )}
+        </div>
 
         {/* Charts row */}
         <div className="grid md:grid-cols-3 gap-4 mb-8">
