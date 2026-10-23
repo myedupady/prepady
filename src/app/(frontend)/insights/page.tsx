@@ -1,12 +1,11 @@
 import type { Metadata } from 'next'
+import { BrandLogo } from '@/components/BrandLogo'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getPayload } from 'payload'
 import type { Where, CollectionSlug } from 'payload'
 import { getAuthContext } from '@/lib/auth'
-import {
-  GraduationCap, ArrowLeft, Users, FileText, Layers, Activity, Sparkles, DollarSign, Database,
-} from 'lucide-react'
+import { ArrowLeft, Users, FileText, Layers, Activity, Sparkles, DollarSign, Database } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { RadialProgress, BarList, type BarItem } from '@/components/charts/Charts'
 
@@ -108,7 +107,7 @@ export default async function InsightsPage() {
       <header className="sticky top-0 z-50 bg-background/90 backdrop-blur border-b border-border">
         <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link href="/dashboard" className="flex items-center gap-2 font-display font-extrabold text-lg text-ink-900">
-            <GraduationCap className="w-6 h-6 text-gold-500" /> Prepady<span className="text-gold-500">.</span>
+            <BrandLogo className="w-7 h-7" /> Prepady<span className="text-gold-500">.</span>
           </Link>
           <div className="flex items-center gap-4">
             <a href="/admin" className="text-sm font-semibold text-muted-foreground hover:text-ink-900">Admin panel</a>

@@ -1,8 +1,9 @@
 'use client'
 
 import { useState } from 'react'
+import { BrandLogo } from '@/components/BrandLogo'
 import Link from 'next/link'
-import { GraduationCap, Loader2 } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { PasswordInput } from '@/components/ui/password-input'
@@ -90,7 +91,7 @@ export default function SignupPage() {
     <main className="min-h-screen bg-background flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
         <Link href="/" className="flex items-center justify-center gap-2 font-display font-extrabold text-2xl text-ink-900 mb-8">
-          <GraduationCap className="w-7 h-7 text-gold-500" />
+          <BrandLogo className="w-8 h-8" />
           Prepady<span className="text-gold-500">.</span>
         </Link>
 

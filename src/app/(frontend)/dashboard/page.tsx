@@ -1,10 +1,9 @@
 import type { Metadata } from 'next'
+import { BrandLogo } from '@/components/BrandLogo'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getAuthContext } from '@/lib/auth'
-import {
-  GraduationCap, Target, Trophy, CheckCircle2, ArrowRight, Sparkles, Globe2, TrendingUp, Gauge, BarChart3, ShieldCheck,
-} from 'lucide-react'
+import { Target, Trophy, CheckCircle2, ArrowRight, Sparkles, Globe2, TrendingUp, Gauge, BarChart3, ShieldCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { LogoutButton } from '@/components/LogoutButton'
@@ -79,7 +78,7 @@ export default async function DashboardPage() {
       <header className="sticky top-0 z-50 bg-background/90 backdrop-blur border-b border-border">
         <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link href="/dashboard" className="flex items-center gap-2 font-display font-extrabold text-lg text-ink-900">
-            <GraduationCap className="w-6 h-6 text-gold-500" />
+            <BrandLogo className="w-7 h-7" />
             Prepady<span className="text-gold-500">.</span>
           </Link>
           <div className="flex items-center gap-4">

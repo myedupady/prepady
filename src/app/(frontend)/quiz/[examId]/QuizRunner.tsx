@@ -1,11 +1,9 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
+import { BrandLogo } from '@/components/BrandLogo'
 import Link from 'next/link'
-import {
-  GraduationCap, Sparkles, CheckCircle2, XCircle, ArrowRight, Loader2, RotateCcw, Lock, Clock, PlayCircle, AlarmClock, Send, MessageCircleQuestion,
-  Share2, Download, Copy, Check, Trophy,
-} from 'lucide-react'
+import { Sparkles, CheckCircle2, XCircle, ArrowRight, Loader2, RotateCcw, Lock, Clock, PlayCircle, AlarmClock, Send, MessageCircleQuestion, Share2, Download, Copy, Check, Trophy } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { MathText } from '@/components/MathText'
 import { getYouTubeId } from '@/lib/utils'
@@ -281,7 +279,7 @@ export function QuizRunner({
       <header className="sticky top-0 z-50 bg-background/90 backdrop-blur border-b border-border">
         <div className="max-w-2xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link href="/dashboard" className="flex items-center gap-2 font-display font-extrabold text-lg text-ink-900">
-            <GraduationCap className="w-6 h-6 text-gold-500" /> Prepady<span className="text-gold-500">.</span>
+            <BrandLogo className="w-7 h-7" /> Prepady<span className="text-gold-500">.</span>
           </Link>
           <div className="flex items-center gap-4">
             <Link href={`/theory/${examId}`} className="text-sm font-semibold text-muted-foreground hover:text-ink-900">Theory</Link>

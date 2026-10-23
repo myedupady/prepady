@@ -104,7 +104,9 @@ export async function POST(req: NextRequest) {
         if (fresh.length) {
           const picked = shuffle(fresh)[0]!
           asked.push(picked.id)
-          nextQuestion = sanitiseQuestion(picked as unknown as Record<string, unknown>)
+          // Re-fetch at depth 1 so the question image (upload relationship) is populated.
+          const full = await payload.findByID({ collection: 'questions', id: picked.id, depth: 1 }).catch(() => picked)
+          nextQuestion = sanitiseQuestion(full as unknown as Record<string, unknown>)
           break
         }
       }
@@ -129,7 +131,8 @@ export async function POST(req: NextRequest) {
         if (fresh.length) {
           const picked = shuffle(fresh)[0]!
           asked.push(picked.id)
-          nextQuestion = sanitiseQuestion(picked as unknown as Record<string, unknown>)
+          const full = await payload.findByID({ collection: 'questions', id: picked.id, depth: 1 }).catch(() => picked)
+          nextQuestion = sanitiseQuestion(full as unknown as Record<string, unknown>)
         }
       }
     }

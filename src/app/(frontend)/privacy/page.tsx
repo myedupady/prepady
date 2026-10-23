@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
+import { BrandLogo } from '@/components/BrandLogo'
 import Link from 'next/link'
-import { GraduationCap } from 'lucide-react'
 
 export const metadata: Metadata = { title: 'Privacy Policy — Prepady' }
 
@@ -12,7 +12,7 @@ export default function PrivacyPage() {
       <header className="border-b border-border">
         <div className="max-w-3xl mx-auto px-6 h-16 flex items-center">
           <Link href="/" className="flex items-center gap-2 font-display font-extrabold text-lg text-ink-900">
-            <GraduationCap className="w-6 h-6 text-gold-500" /> Prepady<span className="text-gold-500">.</span>
+            <BrandLogo className="w-7 h-7" /> Prepady<span className="text-gold-500">.</span>
           </Link>
         </div>
       </header>

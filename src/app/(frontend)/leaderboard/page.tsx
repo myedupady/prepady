@@ -1,7 +1,8 @@
 import type { Metadata } from 'next'
+import { BrandLogo } from '@/components/BrandLogo'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { GraduationCap, ArrowLeft, Trophy, Medal, Flame } from 'lucide-react'
+import { ArrowLeft, Trophy, Medal, Flame } from 'lucide-react'
 import { getAuthContext } from '@/lib/auth'
 
 export const metadata: Metadata = { title: 'Leaderboard — Prepady' }
@@ -99,7 +100,7 @@ export default async function LeaderboardPage() {
       <header className="sticky top-0 z-50 bg-background/90 backdrop-blur border-b border-border">
         <div className="max-w-2xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link href="/dashboard" className="flex items-center gap-2 font-display font-extrabold text-lg text-ink-900">
-            <GraduationCap className="w-6 h-6 text-gold-500" /> Prepady<span className="text-gold-500">.</span>
+            <BrandLogo className="w-7 h-7" /> Prepady<span className="text-gold-500">.</span>
           </Link>
           <Link href="/dashboard" className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-ink-900">
             <ArrowLeft className="w-4 h-4" /> Dashboard

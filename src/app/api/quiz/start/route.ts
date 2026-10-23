@@ -2,9 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import type { RequiredDataFromCollectionSlug, Where } from 'payload'
 import configPromise from '@payload-config'
-import { shuffle, sanitiseQuestion } from '@/lib/quiz'
+import { shuffle, sanitiseQuestion, isPremium } from '@/lib/quiz'
 
-const SESSION_QUESTIONS = 10
+const FREE_PRACTICE_QUESTIONS = 10
+const FREE_MOCK_QUESTIONS = 20
+// Premium plays the whole paper (bounded to the fetch limit for safety).
+const PREMIUM_MAX_QUESTIONS = 200
 
 /**
  * POST /api/quiz/start  Body: { examId, subjectId? }
@@ -51,13 +54,15 @@ export async function POST(req: NextRequest) {
       ...(pastYear ? [{ year: { equals: pastYear } } as Where] : [{ year: { exists: false } } as Where]),
     ]
 
-    const pool = await payload.find({ collection: 'questions', where: { and: baseClauses }, limit: 200, depth: 0 })
+    const pool = await payload.find({ collection: 'questions', where: { and: baseClauses }, limit: PREMIUM_MAX_QUESTIONS, depth: 0 })
     if (pool.docs.length === 0) {
       return NextResponse.json({ error: 'No questions available for this exam yet. Please check back soon.' }, { status: 503 })
     }
 
-    const targetQuestions = isMock ? 20 : SESSION_QUESTIONS
-    const totalQuestions = Math.min(pool.docs.length, targetQuestions)
+    // Premium students sit the full paper; free students get a sampler.
+    const premium = isPremium(user as { plan?: string; subscriptionExpiresAt?: string })
+    const cap = premium ? PREMIUM_MAX_QUESTIONS : isMock ? FREE_MOCK_QUESTIONS : FREE_PRACTICE_QUESTIONS
+    const totalQuestions = Math.min(pool.docs.length, cap)
     const timeLimitMinutes = isMock ? Math.ceil(totalQuestions * 1.2) : 0
     const easy = pool.docs.filter((q) => String(q.difficulty) === '1')
     const first = shuffle(easy.length ? easy : pool.docs)[0]!

@@ -1,10 +1,9 @@
 'use client'
 
 import { useState } from 'react'
+import { BrandLogo } from '@/components/BrandLogo'
 import Link from 'next/link'
-import {
-  GraduationCap, Sparkles, Loader2, Lock, ArrowRight, ArrowLeft, CheckCircle2, AlertCircle, PenLine,
-} from 'lucide-react'
+import { Sparkles, Loader2, Lock, ArrowRight, ArrowLeft, CheckCircle2, AlertCircle, PenLine } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { MathText } from '@/components/MathText'
@@ -60,7 +59,7 @@ export function TheoryRunner({
       <header className="sticky top-0 z-50 bg-background/90 backdrop-blur border-b border-border">
         <div className="max-w-2xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link href="/dashboard" className="flex items-center gap-2 font-display font-extrabold text-lg text-ink-900">
-            <GraduationCap className="w-6 h-6 text-gold-500" /> Prepady<span className="text-gold-500">.</span>
+            <BrandLogo className="w-7 h-7" /> Prepady<span className="text-gold-500">.</span>
           </Link>
           <Link href={`/quiz/${examId}`} className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-ink-900">
             <ArrowLeft className="w-4 h-4" /> MCQ practice
