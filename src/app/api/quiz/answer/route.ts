@@ -66,10 +66,16 @@ export async function POST(req: NextRequest) {
     let nextQuestion: ReturnType<typeof sanitiseQuestion> | null = null
 
     if (!isComplete) {
+      // Multi-subject custom mix keeps its full subject set; otherwise single subject.
+      const plan = Array.isArray(session.subjectPlan)
+        ? (session.subjectPlan as Array<number | string>).map(String).filter((x) => /^\d+$/.test(x))
+        : []
       const subjectClause: Where[] =
-        session.subject != null
-          ? [{ subject: { equals: (session.subject as { id?: number })?.id ?? session.subject } } as Where]
-          : []
+        plan.length > 1
+          ? [{ subject: { in: plan } } as Where]
+          : session.subject != null
+            ? [{ subject: { equals: (session.subject as { id?: number })?.id ?? session.subject } } as Where]
+            : []
       const topicClause: Where[] =
         session.topicRef != null
           ? [{ topicRef: { equals: (session.topicRef as { id?: number })?.id ?? session.topicRef } } as Where]

@@ -19,6 +19,8 @@ export function AdminNavLinks() {
         App
       </p>
       <a href="/insights" style={linkStyle}>📊 Insights</a>
+      <a href="/import" style={linkStyle}>⬆️ Import questions</a>
+      <a href="/finance" style={linkStyle}>💰 Finance</a>
       <a href="/dashboard" style={linkStyle}>🎓 Student dashboard</a>
       <a href="/" style={linkStyle}>🌍 Landing page</a>
     </div>

@@ -3,6 +3,7 @@ import { BrandLogo } from '@/components/BrandLogo'
 import { ArrowLeft, Sparkles, PenLine, ChevronRight, Layers, Timer, CalendarClock, BookOpenText } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { LinkSpinner } from '@/components/LinkSpinner'
+import { MultiSubjectPicker } from './MultiSubjectPicker'
 
 export interface TopicCount {
   id: number
@@ -29,6 +30,7 @@ export function SubjectPicker({
   years,
   theoryCount,
   passagesCount = 0,
+  premium = false,
 }: {
   examId: string
   examName: string
@@ -37,6 +39,7 @@ export function SubjectPicker({
   years: { year: number; count: number }[]
   theoryCount: number
   passagesCount?: number
+  premium?: boolean
 }) {
   const totalMcq = subjects.reduce((n, s) => n + s.count, 0)
 
@@ -134,6 +137,9 @@ export function SubjectPicker({
                 </div>
               ))}
             </div>
+
+            {/* Premium: custom multi-subject mix */}
+            <MultiSubjectPicker examId={examId} subjects={subjects.map((s) => ({ id: s.id, name: s.name }))} premium={premium} />
             </>
             )}
 

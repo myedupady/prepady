@@ -77,6 +77,9 @@ export interface Config {
     questions: Question;
     'quiz-sessions': QuizSession;
     posts: Post;
+    'video-lessons': VideoLesson;
+    partners: Partner;
+    payments: Payment;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -94,6 +97,9 @@ export interface Config {
     questions: QuestionsSelect<false> | QuestionsSelect<true>;
     'quiz-sessions': QuizSessionsSelect<false> | QuizSessionsSelect<true>;
     posts: PostsSelect<false> | PostsSelect<true>;
+    'video-lessons': VideoLessonsSelect<false> | VideoLessonsSelect<true>;
+    partners: PartnersSelect<false> | PartnersSelect<true>;
+    payments: PaymentsSelect<false> | PaymentsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -178,6 +184,10 @@ export interface User {
    * Successful referrals.
    */
   referralCount?: number | null;
+  /**
+   * B2B partner code this user signed up with — grants a discount on every payment, attributed to the partner.
+   */
+  partnerCode?: string | null;
   /**
    * Set when the user confirms their email. Admins can toggle manually.
    */
@@ -630,6 +640,114 @@ export interface Post {
   createdAt: string;
 }
 /**
+ * Video lessons shown at /learn. Paste an unlisted YouTube/Vimeo link; mark a few as Free.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "video-lessons".
+ */
+export interface VideoLesson {
+  id: number;
+  title: string;
+  exam: number | Exam;
+  subject?: (number | null) | Subject;
+  topicRef?: (number | null) | Topic;
+  status: 'draft' | 'published';
+  /**
+   * If on, any student can watch. Otherwise premium only.
+   */
+  isFree?: boolean | null;
+  /**
+   * Lower numbers appear first.
+   */
+  order?: number | null;
+  /**
+   * YouTube or Vimeo link (unlisted is fine).
+   */
+  youtubeUrl: string;
+  /**
+   * Optional, e.g. "12:30".
+   */
+  durationLabel?: string | null;
+  description?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * B2B partners/affiliates. Each has a code students sign up with for a discount; revenue share is attributed to the partner.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partners".
+ */
+export interface Partner {
+  id: number;
+  name: string;
+  /**
+   * The code students sign up with, e.g. LAGOS-ACADEMY. Shared as /signup?ref=CODE.
+   */
+  code: string;
+  /**
+   * The platform account that can sign in to see this partner’s earnings (optional).
+   */
+  profile?: (number | null) | User;
+  active?: boolean | null;
+  /**
+   * How the student discount is calculated.
+   */
+  discountType?: ('percent' | 'fixed') | null;
+  /**
+   * e.g. 10 (%) or 500 (₦ off).
+   */
+  discountValue?: number | null;
+  /**
+   * How the partner’s revenue share is calculated per payment.
+   */
+  revenueShareType?: ('percent' | 'fixed') | null;
+  /**
+   * e.g. 20 (% of the amount paid) or 300 (₦ per payment).
+   */
+  revenueShareValue?: number | null;
+  /**
+   * Agreement terms, contact, etc. (admin only).
+   */
+  notes?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Payment transactions (Paystack). Written automatically on successful payment.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payments".
+ */
+export interface Payment {
+  id: number;
+  reference: string;
+  user: number | User;
+  email?: string | null;
+  planId?: string | null;
+  status?: ('success' | 'pending' | 'failed') | null;
+  /**
+   * Plan price before any discount.
+   */
+  baseAmount?: number | null;
+  discountAmount?: number | null;
+  /**
+   * Actual amount charged.
+   */
+  amount?: number | null;
+  partner?: (number | null) | Partner;
+  partnerCode?: string | null;
+  /**
+   * The partner’s linked account (for their own view).
+   */
+  partnerProfile?: (number | null) | User;
+  partnerShareAmount?: number | null;
+  paystackCustomerCode?: string | null;
+  paidAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
@@ -692,6 +810,18 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'posts';
         value: number | Post;
+      } | null)
+    | ({
+        relationTo: 'video-lessons';
+        value: number | VideoLesson;
+      } | null)
+    | ({
+        relationTo: 'partners';
+        value: number | Partner;
+      } | null)
+    | ({
+        relationTo: 'payments';
+        value: number | Payment;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -752,6 +882,7 @@ export interface UsersSelect<T extends boolean = true> {
   referralCode?: T;
   referredBy?: T;
   referralCount?: T;
+  partnerCode?: T;
   emailVerified?: T;
   emailVerifyToken?: T;
   emailVerifyExpiry?: T;
@@ -942,6 +1073,63 @@ export interface PostsSelect<T extends boolean = true> {
   excerpt?: T;
   coverImage?: T;
   content?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "video-lessons_select".
+ */
+export interface VideoLessonsSelect<T extends boolean = true> {
+  title?: T;
+  exam?: T;
+  subject?: T;
+  topicRef?: T;
+  status?: T;
+  isFree?: T;
+  order?: T;
+  youtubeUrl?: T;
+  durationLabel?: T;
+  description?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partners_select".
+ */
+export interface PartnersSelect<T extends boolean = true> {
+  name?: T;
+  code?: T;
+  profile?: T;
+  active?: T;
+  discountType?: T;
+  discountValue?: T;
+  revenueShareType?: T;
+  revenueShareValue?: T;
+  notes?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payments_select".
+ */
+export interface PaymentsSelect<T extends boolean = true> {
+  reference?: T;
+  user?: T;
+  email?: T;
+  planId?: T;
+  status?: T;
+  baseAmount?: T;
+  discountAmount?: T;
+  amount?: T;
+  partner?: T;
+  partnerCode?: T;
+  partnerProfile?: T;
+  partnerShareAmount?: T;
+  paystackCustomerCode?: T;
+  paidAt?: T;
   updatedAt?: T;
   createdAt?: T;
 }

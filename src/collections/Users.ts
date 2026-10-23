@@ -190,6 +190,12 @@ export const Users: CollectionConfig = {
       access: { update: ({ req }) => req.user?.role === 'admin' },
       admin: { position: 'sidebar', readOnly: true, description: 'Successful referrals.' },
     },
+    {
+      name: 'partnerCode',
+      type: 'text',
+      access: { update: ({ req }) => req.user?.role === 'admin' },
+      admin: { position: 'sidebar', readOnly: true, description: 'B2B partner code this user signed up with — grants a discount on every payment, attributed to the partner.' },
+    },
     // ── Email verification (gates live AI when AI_REQUIRE_VERIFIED_EMAIL=true) ──
     {
       name: 'emailVerified',

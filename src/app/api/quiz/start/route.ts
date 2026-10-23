@@ -21,9 +21,10 @@ export async function POST(req: NextRequest) {
     if (!user) return NextResponse.json({ error: 'You must be logged in.' }, { status: 401 })
 
     const body = await req.json().catch(() => ({}))
-    const { examId, subjectId, topicId, mode, year, variant } = body as {
+    const { examId, subjectId, subjectIds, topicId, mode, year, variant } = body as {
       examId?: number | string
       subjectId?: number | string
+      subjectIds?: Array<number | string>
       topicId?: number | string
       mode?: 'practice' | 'mock'
       year?: number | string
@@ -34,6 +35,15 @@ export async function POST(req: NextRequest) {
     const pastYear = year ? Number(year) : null
     // JAMB paper type (A–F) — lock a session to one type so option orders don't mix.
     const paperType = typeof variant === 'string' && /^[A-F]$/.test(variant) ? variant : null
+    const premium = isPremium(user as { plan?: string; subscriptionExpiresAt?: string })
+
+    // Multi-subject custom mix (premium flexibility): pick several subjects at once.
+    const multiSubjects = Array.isArray(subjectIds)
+      ? [...new Set(subjectIds.map((x) => String(x)).filter((x) => /^\d+$/.test(x)))]
+      : []
+    if (multiSubjects.length > 1 && !premium) {
+      return NextResponse.json({ error: 'Custom multi-subject sessions are a Premium feature.', requiresUpgrade: true }, { status: 403 })
+    }
 
     // Abandon any existing active session for this user + exam.
     const existing = await payload.find({
@@ -51,7 +61,11 @@ export async function POST(req: NextRequest) {
       { questionType: { equals: 'mcq' } },
       { passage: { exists: false } }, // comprehension questions are served via the passage flow
 
-      ...(subjectId ? [{ subject: { equals: subjectId } } as Where] : []),
+      ...(multiSubjects.length > 1
+        ? [{ subject: { in: multiSubjects } } as Where]
+        : subjectId
+          ? [{ subject: { equals: subjectId } } as Where]
+          : []),
       ...(topicId ? [{ topicRef: { equals: topicId } } as Where] : []),
       // Past-questions mode → only that year; practice → only simulated (no year).
       ...(pastYear ? [{ year: { equals: pastYear } } as Where] : [{ year: { exists: false } } as Where]),
@@ -65,7 +79,6 @@ export async function POST(req: NextRequest) {
     }
 
     // Premium students sit the full paper; free students get a sampler.
-    const premium = isPremium(user as { plan?: string; subscriptionExpiresAt?: string })
     const cap = premium ? PREMIUM_MAX_QUESTIONS : isMock ? FREE_MOCK_QUESTIONS : FREE_PRACTICE_QUESTIONS
     const totalQuestions = Math.min(pool.docs.length, cap)
     const timeLimitMinutes = isMock ? Math.ceil(totalQuestions * 1.2) : 0
@@ -79,7 +92,8 @@ export async function POST(req: NextRequest) {
       data: {
         user: user.id,
         exam: String(examId),
-        subject: subjectId ? Number(subjectId) : undefined,
+        subject: multiSubjects.length <= 1 && subjectId ? Number(subjectId) : undefined,
+        subjectPlan: multiSubjects.length > 1 ? multiSubjects : undefined,
         topicRef: topicId ? Number(topicId) : undefined,
         pastYear: pastYear ?? undefined,
         variant: paperType ?? undefined,

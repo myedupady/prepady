@@ -18,6 +18,9 @@ import { Passages } from './collections/Passages'
 import { Questions } from './collections/Questions'
 import { QuizSessions } from './collections/QuizSessions'
 import { Posts } from './collections/Posts'
+import { VideoLessons } from './collections/VideoLessons'
+import { Partners } from './collections/Partners'
+import { Payments } from './collections/Payments'
 import { Theme } from './globals/Theme'
 import { AIControls } from './globals/AIControls'
 
@@ -85,7 +88,7 @@ export default buildConfig({
       beforeDashboard: ['/src/components/admin/AdminDashboard.tsx#AdminDashboard'],
     },
   },
-  collections: [Users, Media, Regions, Exams, Subjects, Topics, Passages, Questions, QuizSessions, Posts],
+  collections: [Users, Media, Regions, Exams, Subjects, Topics, Passages, Questions, QuizSessions, Posts, VideoLessons, Partners, Payments],
   globals: [Theme, AIControls],
   editor: lexicalEditor({}),
   email: payloadEmailAdapter(),

@@ -4,9 +4,11 @@
  * exam/subject/topic names to IDs and performs the upsert. Unit-tested.
  *
  * Expected columns (headers, case-insensitive):
- *   type, exam, subject, topic, difficulty, year, question,
+ *   type, exam, subject, topic, difficulty, year, variant, question,
  *   optiona..optione, correct, marking_scheme, max_marks,
  *   explanation, video_url, image, status, source_ref
+ *
+ *   variant (aka paper_type): optional JAMB paper type A–F.
  */
 
 export interface ParsedQuestionRow {
@@ -16,6 +18,7 @@ export interface ParsedQuestionRow {
   topicName: string
   difficulty: '1' | '2' | '3'
   year?: number
+  variant?: string
   questionText: string
   options: string[]
   correctAnswer?: string
@@ -80,6 +83,13 @@ export function parseQuestionRow(row: Record<string, string>): RowResult {
     else maxMarks = Math.round(m)
   }
 
+  const variantRaw = (get(row, 'variant') || get(row, 'paper_type')).toUpperCase()
+  let variant: string | undefined
+  if (variantRaw) {
+    if (!/^[A-F]$/.test(variantRaw)) errors.push(`variant must be a single letter A–F (got "${variantRaw}")`)
+    else variant = variantRaw
+  }
+
   const statusRaw = get(row, 'status').toLowerCase()
   const status: 'draft' | 'published' = statusRaw === 'published' ? 'published' : 'draft'
   if (statusRaw && statusRaw !== 'published' && statusRaw !== 'draft') {
@@ -124,6 +134,7 @@ export function parseQuestionRow(row: Record<string, string>): RowResult {
       topicName,
       difficulty: difficulty as '1' | '2' | '3',
       year,
+      variant,
       questionText,
       options,
       correctAnswer,

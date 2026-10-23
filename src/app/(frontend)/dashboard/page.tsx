@@ -3,7 +3,7 @@ import { BrandLogo } from '@/components/BrandLogo'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getAuthContext } from '@/lib/auth'
-import { Target, Trophy, CheckCircle2, ArrowRight, Sparkles, Globe2, TrendingUp, Gauge, BarChart3, ShieldCheck } from 'lucide-react'
+import { Target, Trophy, CheckCircle2, ArrowRight, Sparkles, Globe2, TrendingUp, Gauge, BarChart3, ShieldCheck, Clapperboard, Handshake, Receipt } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { LogoutButton } from '@/components/LogoutButton'
@@ -99,6 +99,11 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const firstName = u.name?.split(' ')[0] ?? 'there'
   const premium = u.plan === 'premium'
   const isAdmin = u.role === 'admin'
+  // Is this user a B2B partner (has a linked partner profile)?
+  const partnerCount = await payload
+    .count({ collection: 'partners', where: { profile: { equals: userId } }, overrideAccess: true })
+    .catch(() => ({ totalDocs: 0 }))
+  const isPartner = (partnerCount.totalDocs ?? 0) > 0
 
   const stats = [
     { label: 'Quizzes completed', value: String(completedAll.length), icon: CheckCircle2 },
@@ -129,9 +134,20 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             Prepady<span className="text-gold-500">.</span>
           </Link>
           <div className="flex items-center gap-4">
+            <Link href="/learn" className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-ink-900">
+              <Clapperboard className="w-4 h-4" /> Lessons
+            </Link>
             <Link href="/leaderboard" className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-ink-900">
               <Trophy className="w-4 h-4" /> Leaderboard
             </Link>
+            <Link href="/billing" className="hidden sm:inline-flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-ink-900">
+              <Receipt className="w-4 h-4" /> Billing
+            </Link>
+            {isPartner && (
+              <Link href="/partner" className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-ink-900">
+                <Handshake className="w-4 h-4" /> Partner
+              </Link>
+            )}
             {isAdmin && (
               <Link href="/insights" className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-ink-900">
                 <ShieldCheck className="w-4 h-4" /> Insights

@@ -4,6 +4,7 @@ import { getPayload } from 'payload'
 import configPromise from '@payload-config'
 import { getPlan, formatNgn } from '@/lib/plans'
 import { initTransaction, isPaystackConfigured } from '@/lib/paystack'
+import { resolvePartnerByCode, computeDiscount, computePartnerShare, partnerProfileId } from '@/lib/payments'
 
 /**
  * POST /api/pay/init  Body: { planId }
@@ -30,15 +31,39 @@ export async function POST(req: NextRequest) {
     const reference = `prepady_${user.id}_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`
     const base = process.env.NEXT_PUBLIC_SERVER_URL ?? 'http://localhost:3000'
 
+    // B2B partner discount: a student who signed up with a partner code gets the
+    // agreed discount on EVERY payment, and the partner is attributed a share.
+    const partnerCode = (user as { partnerCode?: string }).partnerCode
+    const partner = partnerCode ? await resolvePartnerByCode(payload, partnerCode) : null
+    const baseAmount = plan.priceNgn
+    const discountAmount = computeDiscount(partner, baseAmount)
+    const amount = Math.max(0, baseAmount - discountAmount)
+    const partnerShareAmount = computePartnerShare(partner, amount)
+
     const { authorizationUrl } = await initTransaction({
       email,
-      amountKobo: plan.priceNgn * 100,
+      amountKobo: amount * 100,
       reference,
       callbackUrl: `${base}/pay/callback`,
-      metadata: { userId: user.id, planId: plan.id, label: `${plan.name} (${formatNgn(plan.priceNgn)})` },
+      metadata: {
+        userId: user.id,
+        planId: plan.id,
+        label: `${plan.name} (${formatNgn(amount)}${discountAmount ? `, ${formatNgn(discountAmount)} off` : ''})`,
+        baseAmount,
+        discountAmount,
+        amount,
+        ...(partner
+          ? {
+              partnerId: partner.id,
+              partnerCode: (partnerCode ?? '').toUpperCase(),
+              partnerProfileId: partnerProfileId(partner),
+              partnerShareAmount,
+            }
+          : {}),
+      },
     })
 
-    return NextResponse.json({ authorizationUrl, reference })
+    return NextResponse.json({ authorizationUrl, reference, amount, discountAmount })
   } catch (err) {
     console.error('pay/init error:', err)
     return NextResponse.json({ error: 'Could not start the payment. Please try again.' }, { status: 500 })

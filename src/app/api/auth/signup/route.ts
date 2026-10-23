@@ -6,6 +6,7 @@ import { verifyTurnstile } from '@/lib/turnstile'
 import { clientIp } from '@/lib/rate-limit'
 import { generateVerifyToken, sendVerificationEmail, VERIFY_TOKEN_TTL_MS } from '@/lib/email-verify'
 import { grantPremiumDays, REFERRAL_REWARD_DAYS } from '@/lib/subscription'
+import { resolvePartnerByCode } from '@/lib/payments'
 
 /**
  * POST /api/auth/signup  Body: { name, email, password, turnstileToken? }
@@ -44,6 +45,10 @@ export async function POST(req: NextRequest) {
 
     const payload = await getPayload({ config: configPromise })
 
+    // A code can be a B2B partner code (→ discount on every payment) or a
+    // student referral code. Partner takes precedence.
+    const partner = referralCode ? await resolvePartnerByCode(payload, referralCode) : null
+
     const token = generateVerifyToken()
     try {
       await payload.create({
@@ -55,7 +60,7 @@ export async function POST(req: NextRequest) {
           emailVerified: false,
           emailVerifyToken: token,
           emailVerifyExpiry: new Date(Date.now() + VERIFY_TOKEN_TTL_MS).toISOString(),
-          ...(referralCode ? { referredBy: referralCode } : {}),
+          ...(partner ? { partnerCode: referralCode } : referralCode ? { referredBy: referralCode } : {}),
         } as unknown as RequiredDataFromCollectionSlug<'users'>,
       })
     } catch {
@@ -70,7 +75,8 @@ export async function POST(req: NextRequest) {
     await sendVerificationEmail(payload, { to: cleanEmail, name: cleanName, token })
 
     // Credit the referrer (non-fatal): +1 count and a premium bonus.
-    if (referralCode) {
+    // Skipped for partner codes — partners earn via revenue share, not premium days.
+    if (referralCode && !partner) {
       try {
         const ref = await payload.find({
           collection: 'users',

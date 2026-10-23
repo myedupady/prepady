@@ -21,6 +21,16 @@ export function getYouTubeId(url: string): string | null {
   return match ? match[1] : null
 }
 
+/** Build an embeddable player URL for a YouTube or Vimeo link (null if neither). */
+export function getVideoEmbedUrl(url: string): string | null {
+  if (!url) return null
+  const yt = getYouTubeId(url)
+  if (yt) return `https://www.youtube.com/embed/${yt}`
+  const vimeo = url.match(/vimeo\.com\/(?:video\/)?(\d+)/)
+  if (vimeo) return `https://player.vimeo.com/video/${vimeo[1]}`
+  return null
+}
+
 /** Get YouTube thumbnail URL from video ID */
 export function getYouTubeThumbnail(
   videoId: string,

@@ -3,6 +3,7 @@ import { getPayload } from 'payload'
 import configPromise from '@payload-config'
 import { verifyWebhookSignature } from '@/lib/paystack'
 import { grantPremium } from '@/lib/subscription'
+import { recordPayment } from '@/lib/payments'
 
 /**
  * POST /api/pay/webhook — Paystack server-to-server events (the reliable source
@@ -18,7 +19,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid signature.' }, { status: 401 })
   }
 
-  let event: { event?: string; data?: { status?: string; customer?: { customer_code?: string }; metadata?: Record<string, unknown> } }
+  let event: {
+    event?: string
+    data?: {
+      status?: string; reference?: string; amount?: number
+      customer?: { customer_code?: string; email?: string }
+      metadata?: Record<string, unknown>
+    }
+  }
   try {
     event = JSON.parse(raw)
   } catch {
@@ -27,7 +35,11 @@ export async function POST(req: NextRequest) {
 
   try {
     if (event.event === 'charge.success' && event.data?.status === 'success') {
-      const meta = (event.data.metadata ?? {}) as { userId?: number | string; planId?: string }
+      const meta = (event.data.metadata ?? {}) as {
+        userId?: number | string; planId?: string
+        baseAmount?: number; discountAmount?: number; amount?: number
+        partnerId?: number | string; partnerCode?: string; partnerProfileId?: number | string; partnerShareAmount?: number
+      }
       if (meta.userId && meta.planId) {
         const payload = await getPayload({ config: configPromise })
         await grantPremium(payload, {
@@ -35,6 +47,24 @@ export async function POST(req: NextRequest) {
           planId: String(meta.planId),
           customerCode: event.data.customer?.customer_code,
         })
+        if (event.data.reference) {
+          const amountPaid = typeof meta.amount === 'number' ? meta.amount : Math.round((event.data.amount ?? 0) / 100)
+          await recordPayment(payload, {
+            reference: event.data.reference,
+            userId: meta.userId,
+            email: event.data.customer?.email,
+            planId: String(meta.planId),
+            baseAmount: Number(meta.baseAmount ?? amountPaid),
+            discountAmount: Number(meta.discountAmount ?? 0),
+            amount: amountPaid,
+            status: 'success',
+            partnerId: meta.partnerId,
+            partnerCode: meta.partnerCode,
+            partnerProfileId: meta.partnerProfileId,
+            partnerShareAmount: Number(meta.partnerShareAmount ?? 0),
+            customerCode: event.data.customer?.customer_code,
+          })
+        }
       }
     }
   } catch (err) {

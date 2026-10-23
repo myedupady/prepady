@@ -1,6 +1,7 @@
 import { redirect, notFound } from 'next/navigation'
 import { relName } from '@/lib/utils'
 import { getAuthContext } from '@/lib/auth'
+import { isPremium } from '@/lib/quiz'
 import { QuizRunner } from './QuizRunner'
 import { SubjectPicker, type SubjectGroup } from './SubjectPicker'
 import { PastYearPicker, type YearSubject } from './PastYearPicker'
@@ -12,13 +13,14 @@ export default async function ExamQuizPage({
   searchParams,
 }: {
   params: Promise<{ examId: string }>
-  searchParams: Promise<{ subject?: string; topic?: string; all?: string; mock?: string; year?: string; type?: string }>
+  searchParams: Promise<{ subject?: string; subjects?: string; topic?: string; all?: string; mock?: string; year?: string; type?: string }>
 }) {
   const { examId } = await params
   const sp = await searchParams
   const isMock = sp.mock === '1'
   const pastYear = sp.year && /^\d{4}$/.test(sp.year) ? sp.year : null
   const paperType = sp.type && /^[A-F]$/.test(sp.type) ? sp.type : null
+  const multiSubjects = (sp.subjects ?? '').split(',').map((s) => s.trim()).filter((s) => /^\d+$/.test(s))
 
   // Gate: must be logged in (strict — same check the API routes use).
   const { payload, user } = await getAuthContext()
@@ -28,9 +30,10 @@ export default async function ExamQuizPage({
   if (!exam) notFound()
   const e = exam as { code?: string; name?: string; country?: string }
   const examName = e.code ?? 'Exam'
-  const u = user as { name?: string; referralCode?: string }
+  const u = user as { name?: string; referralCode?: string; plan?: string; subscriptionExpiresAt?: string }
   const userName = u.name ?? null
   const shareCode = u.referralCode ?? null
+  const premium = isPremium(u)
 
   // ── Past-questions (by year) ──────────────────────────────────────────────
   // Exam → Year → Subject: a year alone shows its subjects so each paper is
@@ -105,6 +108,22 @@ export default async function ExamQuizPage({
         totalCount={yearSubjects.reduce((n, s) => n + s.count, 0)}
         variants={variants}
         selectedType={selectedType}
+      />
+    )
+  }
+
+  // ── Premium custom mix: several subjects at once ──────────────────────────
+  if (multiSubjects.length > 1) {
+    if (!premium) redirect('/upgrade')
+    return (
+      <QuizRunner
+        examId={examId}
+        examName={examName}
+        country={e.country ?? ''}
+        subjectIds={multiSubjects}
+        label="Custom mix"
+        userName={userName}
+        shareCode={shareCode}
       />
     )
   }
@@ -218,6 +237,7 @@ export default async function ExamQuizPage({
       years={years}
       theoryCount={(theoryRes as { totalDocs?: number }).totalDocs ?? 0}
       passagesCount={(passagesRes as { totalDocs?: number }).totalDocs ?? 0}
+      premium={premium}
     />
   )
 }

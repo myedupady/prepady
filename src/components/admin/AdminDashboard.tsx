@@ -54,8 +54,10 @@ export async function AdminDashboard() {
 
   const actions: { label: string; href: string }[] = [
     { label: '➕ New question', href: '/admin/collections/questions/create' },
-    { label: '📖 New passage', href: '/admin/collections/passages/create' },
-    { label: '📝 New exam', href: '/admin/collections/exams/create' },
+    { label: '⬆️ Bulk import', href: '/import' },
+    { label: '🎬 New video lesson', href: '/admin/collections/video-lessons/create' },
+    { label: '📝 New post', href: '/admin/collections/posts/create' },
+    { label: '💰 Finance', href: '/finance' },
     { label: '📊 Full insights', href: '/insights' },
   ]
 
