@@ -76,6 +76,7 @@ export interface Config {
     passages: Passage;
     questions: Question;
     'quiz-sessions': QuizSession;
+    posts: Post;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -92,6 +93,7 @@ export interface Config {
     passages: PassagesSelect<false> | PassagesSelect<true>;
     questions: QuestionsSelect<false> | QuestionsSelect<true>;
     'quiz-sessions': QuizSessionsSelect<false> | QuizSessionsSelect<true>;
+    posts: PostsSelect<false> | PostsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -144,7 +146,7 @@ export interface UserAuthOperations {
 export interface User {
   id: number;
   name: string;
-  role: 'student' | 'admin';
+  role: 'student' | 'editor' | 'admin';
   /**
    * Premium unlocks unlimited AI explanations, full CBT mocks, and essay marking.
    */
@@ -459,6 +461,10 @@ export interface Question {
    * e.g. 2019. Leave blank for original practice questions.
    */
   year?: number | null;
+  /**
+   * JAMB/UTME paper type (A–F). Options differ between types, so a session is served from a single type. Leave blank for exams without types.
+   */
+  variant?: ('A' | 'B' | 'C' | 'D' | 'E' | 'F') | null;
   status: 'draft' | 'published';
   questionType: 'mcq' | 'theory';
   questionText: string;
@@ -528,6 +534,10 @@ export interface QuizSession {
    * Set for a past-questions session (serves only that year). Blank = simulated practice.
    */
   pastYear?: number | null;
+  /**
+   * JAMB paper type (A–F) this session is locked to, if any.
+   */
+  variant?: string | null;
   mode?: ('practice' | 'mock') | null;
   status: 'active' | 'completed' | 'abandoned';
   totalQuestions: number;
@@ -577,6 +587,45 @@ export interface QuizSession {
     | number
     | boolean
     | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Blog posts shown at /blog.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "posts".
+ */
+export interface Post {
+  id: number;
+  title: string;
+  /**
+   * Auto-generated from the title; edit for a custom URL.
+   */
+  slug?: string | null;
+  status: 'draft' | 'published';
+  publishedAt?: string | null;
+  author?: string | null;
+  /**
+   * Short summary shown on the blog list and social cards.
+   */
+  excerpt?: string | null;
+  coverImage?: (number | null) | Media;
+  content: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  };
   updatedAt: string;
   createdAt: string;
 }
@@ -639,6 +688,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'quiz-sessions';
         value: number | QuizSession;
+      } | null)
+    | ({
+        relationTo: 'posts';
+        value: number | Post;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -816,6 +869,7 @@ export interface QuestionsSelect<T extends boolean = true> {
   topic?: T;
   difficulty?: T;
   year?: T;
+  variant?: T;
   status?: T;
   questionType?: T;
   questionText?: T;
@@ -846,6 +900,7 @@ export interface QuizSessionsSelect<T extends boolean = true> {
   subject?: T;
   topicRef?: T;
   pastYear?: T;
+  variant?: T;
   mode?: T;
   status?: T;
   totalQuestions?: T;
@@ -871,6 +926,22 @@ export interface QuizSessionsSelect<T extends boolean = true> {
       };
   askedQuestionIds?: T;
   subjectPlan?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "posts_select".
+ */
+export interface PostsSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  status?: T;
+  publishedAt?: T;
+  author?: T;
+  excerpt?: T;
+  coverImage?: T;
+  content?: T;
   updatedAt?: T;
   createdAt?: T;
 }

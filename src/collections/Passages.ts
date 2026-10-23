@@ -16,8 +16,8 @@ export const Passages: CollectionConfig = {
   },
   access: {
     read: ({ req }) => !!req.user,
-    create: ({ req }) => req.user?.role === 'admin',
-    update: ({ req }) => req.user?.role === 'admin',
+    create: ({ req }) => req.user?.role === 'admin' || req.user?.role === 'editor',
+    update: ({ req }) => req.user?.role === 'admin' || req.user?.role === 'editor',
     delete: ({ req }) => req.user?.role === 'admin',
   },
   fields: [

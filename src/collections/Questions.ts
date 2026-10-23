@@ -19,8 +19,8 @@ export const Questions: CollectionConfig = {
   },
   access: {
     read: ({ req }) => !!req.user, // served to the quiz engine for logged-in students
-    create: ({ req }) => req.user?.role === 'admin',
-    update: ({ req }) => req.user?.role === 'admin',
+    create: ({ req }) => req.user?.role === 'admin' || req.user?.role === 'editor',
+    update: ({ req }) => req.user?.role === 'admin' || req.user?.role === 'editor',
     delete: ({ req }) => req.user?.role === 'admin',
   },
   fields: [
@@ -81,6 +81,23 @@ export const Questions: CollectionConfig = {
       type: 'number',
       label: 'Past Question Year',
       admin: { position: 'sidebar', description: 'e.g. 2019. Leave blank for original practice questions.' },
+    },
+    {
+      name: 'variant',
+      type: 'select',
+      label: 'Paper Type',
+      options: [
+        { label: 'Type A', value: 'A' },
+        { label: 'Type B', value: 'B' },
+        { label: 'Type C', value: 'C' },
+        { label: 'Type D', value: 'D' },
+        { label: 'Type E', value: 'E' },
+        { label: 'Type F', value: 'F' },
+      ],
+      admin: {
+        position: 'sidebar',
+        description: 'JAMB/UTME paper type (A–F). Options differ between types, so a session is served from a single type. Leave blank for exams without types.',
+      },
     },
     {
       name: 'status',

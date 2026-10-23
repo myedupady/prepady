@@ -47,6 +47,11 @@ export const QuizSessions: CollectionConfig = {
       admin: { position: 'sidebar', description: 'Set for a past-questions session (serves only that year). Blank = simulated practice.' },
     },
     {
+      name: 'variant',
+      type: 'text',
+      admin: { position: 'sidebar', description: 'JAMB paper type (A–F) this session is locked to, if any.' },
+    },
+    {
       name: 'mode',
       type: 'select',
       defaultValue: 'practice',

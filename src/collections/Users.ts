@@ -96,9 +96,11 @@ export const Users: CollectionConfig = {
       required: true,
       options: [
         { label: 'Student', value: 'student' },
+        { label: 'Content Editor', value: 'editor' },
         { label: 'Admin', value: 'admin' },
       ],
-      // Only admins can change roles — students can't promote themselves.
+      // Only admins can change roles — students can't promote themselves, and a
+      // content editor can't promote themselves to admin (no finance access).
       access: { update: ({ req }) => req.user?.role === 'admin' },
       admin: { position: 'sidebar' },
     },

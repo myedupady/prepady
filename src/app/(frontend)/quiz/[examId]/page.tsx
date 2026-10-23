@@ -12,12 +12,13 @@ export default async function ExamQuizPage({
   searchParams,
 }: {
   params: Promise<{ examId: string }>
-  searchParams: Promise<{ subject?: string; topic?: string; all?: string; mock?: string; year?: string }>
+  searchParams: Promise<{ subject?: string; topic?: string; all?: string; mock?: string; year?: string; type?: string }>
 }) {
   const { examId } = await params
   const sp = await searchParams
   const isMock = sp.mock === '1'
   const pastYear = sp.year && /^\d{4}$/.test(sp.year) ? sp.year : null
+  const paperType = sp.type && /^[A-F]$/.test(sp.type) ? sp.type : null
 
   // Gate: must be logged in (strict — same check the API routes use).
   const { payload, user } = await getAuthContext()
@@ -49,9 +50,10 @@ export default async function ExamQuizPage({
           subjectId={sp.all ? null : sp.subject ?? null}
           topicId={null}
           year={pastYear}
+          variant={paperType}
           userName={userName}
           shareCode={shareCode}
-          label={`Past questions · ${pastYear}${subjectName ? ` · ${subjectName}` : sp.all ? ' · All subjects' : ''}`}
+          label={`Past questions · ${pastYear}${subjectName ? ` · ${subjectName}` : sp.all ? ' · All subjects' : ''}${paperType ? ` · Type ${paperType}` : ''}`}
         />
       )
     }
@@ -75,8 +77,14 @@ export default async function ExamQuizPage({
       })
       .catch(() => ({ docs: [] as Array<Record<string, unknown>> }))
 
+    // Distinct JAMB paper types present for this year (e.g. A, B). When types
+    // exist the student picks one first (default A) so option orders don't mix.
+    const variants = [...new Set(yrRes.docs.map((q) => String(q.variant ?? '')).filter(Boolean))].sort()
+    const selectedType = paperType ?? (variants.length ? variants[0] : null)
+
     const bySubj = new Map<number, YearSubject>()
     for (const q of yrRes.docs) {
+      if (selectedType && String(q.variant ?? '') !== selectedType) continue
       const subj = q.subject as { id?: number } | number | null
       const subjId = typeof subj === 'object' && subj ? subj.id : typeof subj === 'number' ? subj : undefined
       if (!subjId) continue
@@ -94,7 +102,9 @@ export default async function ExamQuizPage({
         country={e.country ?? ''}
         year={Number(pastYear)}
         subjects={yearSubjects}
-        totalCount={yrRes.docs.length}
+        totalCount={yearSubjects.reduce((n, s) => n + s.count, 0)}
+        variants={variants}
+        selectedType={selectedType}
       />
     )
   }

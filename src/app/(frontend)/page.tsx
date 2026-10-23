@@ -273,6 +273,7 @@ export default async function HomePage() {
         <div className="max-w-5xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
           <p>© {new Date().getFullYear()} Prepady. AI-powered exam preparation across Africa.</p>
           <nav className="flex items-center gap-5">
+            <Link href="/blog" className="hover:text-gold-400 transition-colors">Blog</Link>
             <Link href="/privacy" className="hover:text-gold-400 transition-colors">Privacy</Link>
             <Link href="/terms" className="hover:text-gold-400 transition-colors">Terms</Link>
           </nav>

@@ -21,16 +21,19 @@ export async function POST(req: NextRequest) {
     if (!user) return NextResponse.json({ error: 'You must be logged in.' }, { status: 401 })
 
     const body = await req.json().catch(() => ({}))
-    const { examId, subjectId, topicId, mode, year } = body as {
+    const { examId, subjectId, topicId, mode, year, variant } = body as {
       examId?: number | string
       subjectId?: number | string
       topicId?: number | string
       mode?: 'practice' | 'mock'
       year?: number | string
+      variant?: string
     }
     if (!examId) return NextResponse.json({ error: 'examId is required.' }, { status: 400 })
     const isMock = mode === 'mock'
     const pastYear = year ? Number(year) : null
+    // JAMB paper type (A–F) — lock a session to one type so option orders don't mix.
+    const paperType = typeof variant === 'string' && /^[A-F]$/.test(variant) ? variant : null
 
     // Abandon any existing active session for this user + exam.
     const existing = await payload.find({
@@ -52,6 +55,8 @@ export async function POST(req: NextRequest) {
       ...(topicId ? [{ topicRef: { equals: topicId } } as Where] : []),
       // Past-questions mode → only that year; practice → only simulated (no year).
       ...(pastYear ? [{ year: { equals: pastYear } } as Where] : [{ year: { exists: false } } as Where]),
+      // Lock to a single JAMB paper type when one is chosen.
+      ...(paperType ? [{ variant: { equals: paperType } } as Where] : []),
     ]
 
     const pool = await payload.find({ collection: 'questions', where: { and: baseClauses }, limit: PREMIUM_MAX_QUESTIONS, depth: 0 })
@@ -77,6 +82,7 @@ export async function POST(req: NextRequest) {
         subject: subjectId ? Number(subjectId) : undefined,
         topicRef: topicId ? Number(topicId) : undefined,
         pastYear: pastYear ?? undefined,
+        variant: paperType ?? undefined,
         mode: isMock ? 'mock' : 'practice',
         status: 'active',
         totalQuestions,

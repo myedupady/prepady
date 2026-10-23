@@ -79,6 +79,11 @@ export async function POST(req: NextRequest) {
         session.pastYear != null
           ? [{ year: { equals: session.pastYear } } as Where]
           : [{ year: { exists: false } } as Where]
+      // Keep a JAMB-typed session on its paper type.
+      const variantClause: Where[] =
+        session.variant != null && session.variant !== ''
+          ? [{ variant: { equals: session.variant } } as Where]
+          : []
       const tryDiffs: Difficulty[] = [newDiff]
       if (newDiff > 1) tryDiffs.push((newDiff - 1) as Difficulty)
       if (newDiff < 3) tryDiffs.push((newDiff + 1) as Difficulty)
@@ -96,6 +101,7 @@ export async function POST(req: NextRequest) {
               ...subjectClause,
               ...topicClause,
               ...yearClause,
+              ...variantClause,
             ],
           },
           limit: 50,
@@ -123,6 +129,7 @@ export async function POST(req: NextRequest) {
               ...subjectClause,
               ...topicClause,
               ...yearClause,
+              ...variantClause,
             ],
           },
           limit: 100,
