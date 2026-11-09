@@ -80,6 +80,7 @@ export interface Config {
     'video-lessons': VideoLesson;
     partners: Partner;
     payments: Payment;
+    'whatsapp-sessions': WhatsappSession;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -100,6 +101,7 @@ export interface Config {
     'video-lessons': VideoLessonsSelect<false> | VideoLessonsSelect<true>;
     partners: PartnersSelect<false> | PartnersSelect<true>;
     payments: PaymentsSelect<false> | PaymentsSelect<true>;
+    'whatsapp-sessions': WhatsappSessionsSelect<false> | WhatsappSessionsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -748,6 +750,29 @@ export interface Payment {
   createdAt: string;
 }
 /**
+ * WhatsApp funnel conversation state (one row per phone number).
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "whatsapp-sessions".
+ */
+export interface WhatsappSession {
+  id: number;
+  phone: string;
+  name?: string | null;
+  step?: string | null;
+  data?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
@@ -822,6 +847,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'payments';
         value: number | Payment;
+      } | null)
+    | ({
+        relationTo: 'whatsapp-sessions';
+        value: number | WhatsappSession;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -1130,6 +1159,18 @@ export interface PaymentsSelect<T extends boolean = true> {
   partnerShareAmount?: T;
   paystackCustomerCode?: T;
   paidAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "whatsapp-sessions_select".
+ */
+export interface WhatsappSessionsSelect<T extends boolean = true> {
+  phone?: T;
+  name?: T;
+  step?: T;
+  data?: T;
   updatedAt?: T;
   createdAt?: T;
 }
