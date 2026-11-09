@@ -8,13 +8,16 @@ import type { MetadataRoute } from 'next'
  * rules and the per-user/budget caps are for; see docs/SECURITY.md.)
  */
 export default function robots(): MetadataRoute.Robots {
+  const base = (process.env.NEXT_PUBLIC_SERVER_URL ?? 'https://prepady.com').replace(/\/$/, '')
   return {
     rules: [
       {
         userAgent: '*',
-        allow: ['/', '/login', '/signup'],
-        disallow: ['/admin', '/api', '/dashboard', '/quiz', '/theory', '/forgot-password', '/reset-password', '/verify'],
+        allow: ['/', '/blog', '/login', '/signup', '/privacy', '/terms'],
+        disallow: ['/admin', '/api', '/dashboard', '/quiz', '/theory', '/comprehension', '/learn', '/leaderboard', '/finance', '/partner', '/billing', '/import', '/forgot-password', '/reset-password', '/verify'],
       },
     ],
+    sitemap: `${base}/sitemap.xml`,
+    host: base,
   }
 }

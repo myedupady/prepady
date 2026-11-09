@@ -6,10 +6,26 @@ import { hexToHslTriplet } from '@/lib/color'
 import 'katex/dist/katex.min.css'
 import './globals.css'
 
+const SITE_URL = process.env.NEXT_PUBLIC_SERVER_URL ?? 'https://prepady.com'
+
+// Search-engine ownership verification. Add the codes as Vercel env vars once the
+// GSC / Bing accounts exist (GOOGLE_SITE_VERIFICATION, BING_SITE_VERIFICATION);
+// until then these are simply omitted.
+const verification: Metadata['verification'] = {
+  ...(process.env.GOOGLE_SITE_VERIFICATION ? { google: process.env.GOOGLE_SITE_VERIFICATION } : {}),
+  ...(process.env.BING_SITE_VERIFICATION ? { other: { 'msvalidate.01': process.env.BING_SITE_VERIFICATION } } : {}),
+}
+
 export const metadata: Metadata = {
-  title: 'Prepady — AI exam prep for Africa',
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: 'Prepady — AI exam prep for Africa',
+    template: '%s · Prepady',
+  },
   description:
     'Adaptive practice tests, real past questions, and an AI tutor that explains every question — for national exams across Africa.',
+  keywords: ['JAMB', 'WAEC', 'NECO', 'UTME', 'past questions', 'CBT practice', 'exam prep', 'Nigeria', 'Africa'],
+  alternates: { canonical: '/' },
   icons: {
     icon: [
       { url: '/favicon.ico', sizes: '48x48', type: 'image/x-icon' },
@@ -19,12 +35,22 @@ export const metadata: Metadata = {
     ],
   },
   openGraph: {
+    type: 'website',
+    siteName: 'Prepady',
+    url: SITE_URL,
     title: 'Prepady — AI exam prep for Africa',
     description:
       'Adaptive practice tests, real past questions, and an AI tutor that explains every question — for national exams across Africa.',
     images: [{ url: '/opengraph-image.png', width: 1200, height: 630 }],
   },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Prepady — AI exam prep for Africa',
+    description: 'Adaptive practice, real past questions, and an AI tutor for national exams across Africa.',
+    images: ['/opengraph-image.png'],
+  },
   manifest: '/manifest.json',
+  ...(verification.google || verification.other ? { verification } : {}),
 }
 
 /**
