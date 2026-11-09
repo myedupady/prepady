@@ -3,7 +3,8 @@ import { BrandLogo } from '@/components/BrandLogo'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getAuthContext } from '@/lib/auth'
-import { Target, Trophy, CheckCircle2, ArrowRight, Sparkles, Globe2, TrendingUp, Gauge, BarChart3, ShieldCheck, Clapperboard, Handshake, Receipt } from 'lucide-react'
+import { relName } from '@/lib/utils'
+import { Target, Trophy, CheckCircle2, ArrowRight, Sparkles, Globe2, TrendingUp, Gauge, BarChart3, ShieldCheck, Clapperboard, Handshake, Receipt, Flame, CheckCircle, PlayCircle, Rocket } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { LogoutButton } from '@/components/LogoutButton'
@@ -88,12 +89,50 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const subjectBars: BarItem[] = [...subj.entries()]
     .map(([label, m]) => ({ label, pct: (m.c / m.t) * 100, detail: `${m.t} Q${m.t === 1 ? '' : 's'}`, tone: bandTone((m.c / m.t) * 100) }))
     .sort((a, b) => b.pct - a.pct)
+  const totalAnswered = [...subj.values()].reduce((a, m) => a + m.t, 0)
+
+  // Map each topic → a published video lesson on it (for weak-area → video).
+  const videosRes = await payload
+    .find({ collection: 'video-lessons', where: { status: { equals: 'published' } }, limit: 500, depth: 1, overrideAccess: true })
+    .catch(() => ({ docs: [] as Array<Record<string, unknown>> }))
+  const videoByTopic = new Map<string, number>()
+  for (const v of videosRes.docs) {
+    const tn = relName(v.topicRef)
+    if (tn) videoByTopic.set(tn.toLowerCase(), v.id as number)
+  }
   const weakTopics: BarItem[] = [...topic.entries()]
     .filter(([, m]) => m.t >= 2)
-    .map(([label, m]) => ({ label, pct: (m.c / m.t) * 100, detail: `${m.c}/${m.t}`, tone: bandTone((m.c / m.t) * 100) }))
+    .map(([label, m]) => {
+      const vid = videoByTopic.get(label.toLowerCase())
+      return { label, pct: (m.c / m.t) * 100, detail: `${m.c}/${m.t}`, tone: bandTone((m.c / m.t) * 100), href: vid ? `/learn/${vid}` : undefined }
+    })
     .sort((a, b) => a.pct - b.pct)
     .slice(0, 5)
-  const totalAnswered = [...subj.values()].reduce((a, m) => a + m.t, 0)
+
+  // ── Today's mission: a daily questions goal ──────────────────────────────
+  const DAILY_GOAL = 20
+  const todayStr = new Date().toDateString()
+  let answeredToday = 0
+  let correctToday = 0
+  for (const s of allSessions) {
+    const t = s.completedAt || s.startedAt
+    if (!t || new Date(t).toDateString() !== todayStr) continue
+    for (const a of s.answers ?? []) { answeredToday++; if (a.isCorrect) correctToday++ }
+  }
+  const missionPct = Math.min(100, Math.round((answeredToday / DAILY_GOAL) * 100))
+  const missionDone = answeredToday >= DAILY_GOAL
+
+  // ── Recommended daily task ────────────────────────────────────────────────
+  const lastExamId = allSessions[0] ? String((allSessions[0] as { exam?: string | number }).exam ?? '') : ''
+  const lastExam = lastExamId ? await payload.findByID({ collection: 'exams', id: lastExamId, depth: 0, overrideAccess: true }).catch(() => null) : null
+  const lastExamName = (lastExam as { code?: string } | null)?.code ?? null
+  const weakest = weakTopics[0] ?? null // already sorted ascending by score
+  const recVideoId = weakest ? videoByTopic.get(weakest.label.toLowerCase()) : undefined
+  const recommendation = weakest
+    ? { title: `Sharpen your weakest area: ${weakest.label}`, sub: `You're at ${Math.round(weakest.pct)}% here — a focused round will lift your score fast.`, href: lastExamId ? `/quiz/${lastExamId}?all=1` : '/quiz', videoId: recVideoId }
+    : lastExamId
+      ? { title: `Continue ${lastExamName ?? 'your exam'}`, sub: 'Pick up where you left off with a quick adaptive round.', href: `/quiz/${lastExamId}?all=1`, videoId: undefined as number | undefined }
+      : { title: 'Start your first quiz', sub: 'Choose an exam and answer a few questions — your progress appears here.', href: '/quiz', videoId: undefined as number | undefined }
 
   const u = user as { name?: string; email?: string; plan?: string; role?: string; referralCode?: string; referralCount?: number }
   const firstName = u.name?.split(' ')[0] ?? 'there'
@@ -183,6 +222,46 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           ))}
         </div>
 
+        {/* Today's mission + Recommended daily task */}
+        <div className="grid md:grid-cols-2 gap-4 mb-8">
+          <Card className="border border-border bg-card shadow-brand">
+            <CardContent className="p-5">
+              <p className="flex items-center gap-1.5 text-xs font-black uppercase tracking-widest text-gold-700 mb-3"><Flame className="w-3.5 h-3.5" /> Today&apos;s mission</p>
+              {missionDone ? (
+                <>
+                  <p className="flex items-center gap-2 font-black text-ink-900 mb-1"><CheckCircle className="w-5 h-5 text-success" /> Mission complete! 🎉</p>
+                  <p className="text-sm text-muted-foreground mb-4">{answeredToday} questions today · {correctToday} correct. Keep the streak going.</p>
+                </>
+              ) : (
+                <>
+                  <p className="font-black text-ink-900 mb-1">Answer {DAILY_GOAL} questions today</p>
+                  <p className="text-sm text-muted-foreground mb-3">{answeredToday} of {DAILY_GOAL} done{answeredToday > 0 ? ` · ${correctToday} correct` : ''}.</p>
+                  <div className="h-2.5 rounded-full bg-muted overflow-hidden mb-4">
+                    <div className="h-full rounded-full bg-gold-500 transition-all" style={{ width: `${Math.max(3, missionPct)}%` }} />
+                  </div>
+                </>
+              )}
+              <Button asChild variant={missionDone ? 'outline' : 'accent'} size="sm" className="rounded-xl font-black">
+                <Link href="/quiz">{missionDone ? 'Practise more' : 'Continue mission'} <ArrowRight className="w-4 h-4" /></Link>
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="border border-border bg-card shadow-brand">
+            <CardContent className="p-5">
+              <p className="flex items-center gap-1.5 text-xs font-black uppercase tracking-widest text-gold-700 mb-3"><Rocket className="w-3.5 h-3.5" /> Recommended for you</p>
+              <p className="font-black text-ink-900 mb-1">{recommendation.title}</p>
+              <p className="text-sm text-muted-foreground mb-4">{recommendation.sub}</p>
+              <div className="flex flex-wrap gap-2">
+                <Button asChild variant="accent" size="sm" className="rounded-xl font-black"><Link href={recommendation.href}>Practise <ArrowRight className="w-4 h-4" /></Link></Button>
+                {recommendation.videoId && (
+                  <Button asChild variant="outline" size="sm" className="rounded-xl font-bold"><Link href={`/learn/${recommendation.videoId}`}><PlayCircle className="w-4 h-4" /> Watch lesson</Link></Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
         {/* Upgrade CTA (free users) */}
         {!premium && (
           <Link href="/upgrade" className="block mb-8 rounded-2xl bg-ink-900 text-ink-50 p-5 hover:bg-ink-800 transition-colors">
@@ -241,7 +320,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           </Card>
           <Card className="border border-border bg-card shadow-brand">
             <CardContent className="p-5">
-              <p className="flex items-center gap-1.5 text-xs font-black uppercase tracking-widest text-muted-foreground mb-4"><Target className="w-3.5 h-3.5" /> Focus areas (weakest topics)</p>
+              <p className="flex items-center gap-1.5 text-xs font-black uppercase tracking-widest text-muted-foreground mb-1"><Target className="w-3.5 h-3.5" /> Focus areas (weakest topics)</p>
+              <p className="text-[11px] text-muted-foreground mb-4">A ▶ means there&apos;s a lesson — tap the topic to watch.</p>
               <BarList items={weakTopics} />
             </CardContent>
           </Card>

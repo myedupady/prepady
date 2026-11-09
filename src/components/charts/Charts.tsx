@@ -2,6 +2,8 @@
  * Lightweight, dependency-free SVG charts (server-rendered, themeable via the
  * brand Tailwind colours). Used on the student dashboard and admin insights.
  */
+import Link from 'next/link'
+import { PlayCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 // ── Radial progress (donut) ───────────────────────────────────────────────────
@@ -56,6 +58,8 @@ export interface BarItem {
   /** Optional count/detail text on the right. */
   detail?: string
   tone?: 'good' | 'fair' | 'weak' | 'neutral'
+  /** When set, the bar becomes a link (e.g. to a video lesson on this topic). */
+  href?: string
 }
 
 const BAR_TONE: Record<NonNullable<BarItem['tone']>, string> = {
@@ -71,19 +75,31 @@ export function BarList({ items, className }: { items: BarItem[]; className?: st
   }
   return (
     <div className={cn('space-y-3', className)}>
-      {items.map((it, i) => (
-        <div key={i}>
-          <div className="flex items-center justify-between mb-1 text-sm">
-            <span className="font-semibold text-ink-900 truncate pr-2">{it.label}</span>
-            <span className="font-bold text-ink-900 shrink-0">
-              {Math.round(it.pct)}%{it.detail ? <span className="text-muted-foreground font-medium"> · {it.detail}</span> : ''}
-            </span>
-          </div>
-          <div className="h-2.5 rounded-full bg-muted overflow-hidden">
-            <div className={cn('h-full rounded-full transition-all', BAR_TONE[it.tone ?? 'neutral'])} style={{ width: `${Math.max(2, Math.min(100, it.pct))}%` }} />
-          </div>
-        </div>
-      ))}
+      {items.map((it, i) => {
+        const inner = (
+          <>
+            <div className="flex items-center justify-between mb-1 text-sm">
+              <span className="font-semibold text-ink-900 truncate pr-2 group-hover:text-gold-700">
+                {it.label}
+                {it.href && <PlayCircle className="inline w-3.5 h-3.5 ml-1.5 -mt-0.5 text-gold-600 opacity-0 group-hover:opacity-100 transition-opacity" />}
+              </span>
+              <span className="font-bold text-ink-900 shrink-0">
+                {Math.round(it.pct)}%{it.detail ? <span className="text-muted-foreground font-medium"> · {it.detail}</span> : ''}
+              </span>
+            </div>
+            <div className="h-2.5 rounded-full bg-muted overflow-hidden">
+              <div className={cn('h-full rounded-full transition-all', BAR_TONE[it.tone ?? 'neutral'])} style={{ width: `${Math.max(2, Math.min(100, it.pct))}%` }} />
+            </div>
+          </>
+        )
+        return it.href ? (
+          <Link key={i} href={it.href} className="group block rounded-lg -mx-1 px-1 py-0.5 hover:bg-gold-50/60 transition-colors" title="Watch a lesson on this topic">
+            {inner}
+          </Link>
+        ) : (
+          <div key={i} className="group">{inner}</div>
+        )
+      })}
     </div>
   )
 }

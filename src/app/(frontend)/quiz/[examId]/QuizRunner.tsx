@@ -71,6 +71,9 @@ export function QuizRunner({
   const [deadline, setDeadline] = useState<number | null>(null)
   const [remainingMs, setRemainingMs] = useState<number>(0)
   const [timedOut, setTimedOut] = useState(false)
+  // Elapsed timer for non-mock (practice/past-question) sessions.
+  const [startedMs, setStartedMs] = useState<number | null>(null)
+  const [elapsedMs, setElapsedMs] = useState(0)
   const [lastStats, setLastStats] = useState<SessionStats | null>(null)
   const [showVideo, setShowVideo] = useState(false)
   // Follow-up AI conversation (per question)
@@ -105,6 +108,8 @@ export function QuizRunner({
       if (data.mode === 'mock' && data.timeLimitMinutes > 0) {
         setDeadline(Date.now() + data.timeLimitMinutes * 60000)
       }
+      setStartedMs(Date.now())
+      setElapsedMs(0)
       setPhase('question')
     } catch {
       setErrorMsg('Could not start the quiz. Please try again.')
@@ -127,6 +132,13 @@ export function QuizRunner({
     const id = setInterval(tick, 1000)
     return () => clearInterval(id)
   }, [deadline])
+
+  // Elapsed count-up for practice/past sessions (no deadline).
+  useEffect(() => {
+    if (deadline || phase !== 'question' || !startedMs) return
+    const id = setInterval(() => setElapsedMs(Date.now() - startedMs), 1000)
+    return () => clearInterval(id)
+  }, [deadline, phase, startedMs])
 
   useEffect(() => { start() }, [start])
 
@@ -171,6 +183,7 @@ export function QuizRunner({
   const secs = Math.max(0, Math.floor((remainingMs % 60000) / 1000))
   const timeStr = `${mins}:${String(secs).padStart(2, '0')}`
   const lowTime = deadline && remainingMs < 60000
+  const elapsedStr = `${Math.floor(elapsedMs / 60000)}:${String(Math.floor((elapsedMs % 60000) / 1000)).padStart(2, '0')}`
 
   async function explain() {
     if (!question || aiLoading) return
@@ -375,6 +388,11 @@ export function QuizRunner({
       <div className="flex items-center justify-between mb-4">
         <span className="text-xs font-black uppercase tracking-widest text-gold-700">{examName}{label ? ` · ${label}` : country ? ` · ${country}` : ''}</span>
         <div className="flex items-center gap-3">
+          {!deadline && (
+            <span className="inline-flex items-center gap-1 text-xs font-black tabular-nums px-2 py-1 rounded-lg bg-ink-50 text-ink-700">
+              <Clock className="w-3.5 h-3.5" /> {elapsedStr}
+            </span>
+          )}
           {deadline && (
             <span className={`inline-flex items-center gap-1 text-xs font-black tabular-nums px-2 py-1 rounded-lg ${lowTime ? 'bg-destructive/10 text-destructive animate-pulse' : 'bg-ink-900 text-gold-400'}`}>
               <Clock className="w-3.5 h-3.5" /> {timeStr}
