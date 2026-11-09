@@ -4,11 +4,13 @@
  * exam/subject/topic names to IDs and performs the upsert. Unit-tested.
  *
  * Expected columns (headers, case-insensitive):
- *   type, exam, subject, topic, difficulty, year, variant, question,
+ *   type, exam, subject, topic, difficulty, year, variant, also_exams, question,
  *   optiona..optione, correct, marking_scheme, max_marks,
  *   explanation, video_url, image, status, source_ref
  *
  *   variant (aka paper_type): optional JAMB paper type A–F.
+ *   also_exams: optional extra exam-board codes (comma/pipe-separated) this same
+ *     question also belongs to, e.g. "WASSCE|NECO".
  */
 
 export interface ParsedQuestionRow {
@@ -19,6 +21,7 @@ export interface ParsedQuestionRow {
   difficulty: '1' | '2' | '3'
   year?: number
   variant?: string
+  extraExamCodes?: string[]
   questionText: string
   options: string[]
   correctAnswer?: string
@@ -90,6 +93,11 @@ export function parseQuestionRow(row: Record<string, string>): RowResult {
     else variant = variantRaw
   }
 
+  const extraRaw = get(row, 'also_exams')
+  const extraExamCodes = extraRaw
+    ? [...new Set(extraRaw.split(/[|,]/).map((s) => s.trim()).filter(Boolean))]
+    : undefined
+
   const statusRaw = get(row, 'status').toLowerCase()
   const status: 'draft' | 'published' = statusRaw === 'published' ? 'published' : 'draft'
   if (statusRaw && statusRaw !== 'published' && statusRaw !== 'draft') {
@@ -135,6 +143,7 @@ export function parseQuestionRow(row: Record<string, string>): RowResult {
       difficulty: difficulty as '1' | '2' | '3',
       year,
       variant,
+      extraExamCodes,
       questionText,
       options,
       correctAnswer,

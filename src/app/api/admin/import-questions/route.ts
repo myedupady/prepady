@@ -85,6 +85,15 @@ export async function POST(req: NextRequest) {
       const subjectId = await resolveSubject(v.subjectName)
       const topicId = await resolveTopic(subjectId, v.topicName)
 
+      // Resolve extra exam boards (multi-board questions).
+      const extraExamIds: number[] = []
+      for (const code of v.extraExamCodes ?? []) {
+        if (code === v.examCode) continue
+        const eid = await resolveExam(code)
+        if (eid) extraExamIds.push(eid)
+        else errors.push(`Row ${i + 2}: unknown also_exams code "${code}" (skipped).`)
+      }
+
       const data: Record<string, unknown> = {
         exam: examId,
         subject: subjectId,
@@ -97,6 +106,7 @@ export async function POST(req: NextRequest) {
         maxMarks: v.maxMarks,
         ...(v.year ? { year: v.year } : {}),
         ...(v.variant ? { variant: v.variant } : {}),
+        ...(extraExamIds.length ? { extraExams: extraExamIds } : {}),
         ...(v.type === 'mcq'
           ? { options: v.options.map((t) => ({ text: t })), correctAnswer: v.correctAnswer }
           : { markingScheme: v.markingScheme }),

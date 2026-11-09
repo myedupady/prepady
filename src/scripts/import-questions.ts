@@ -148,6 +148,14 @@ async function run() {
     const subjectId = await resolveSubject(v.subjectName)
     const topicId = await resolveTopic(subjectId, v.topicName)
 
+    const extraExamIds: number[] = []
+    for (const code of v.extraExamCodes ?? []) {
+      if (code === v.examCode) continue
+      const eid = await resolveExam(code)
+      if (eid) extraExamIds.push(eid)
+      else console.error(`  ✗ Row ${i + 2}: unknown also_exams code "${code}" (skipped).`)
+    }
+
     const data: Record<string, unknown> = {
       exam: examId,
       subject: subjectId,
@@ -159,6 +167,8 @@ async function run() {
       questionText: v.questionText,
       maxMarks: v.maxMarks,
       ...(v.year ? { year: v.year } : {}),
+      ...(v.variant ? { variant: v.variant } : {}),
+      ...(extraExamIds.length ? { extraExams: extraExamIds } : {}),
       ...(v.type === 'mcq'
         ? { options: v.options.map((t) => ({ text: t })), correctAnswer: v.correctAnswer }
         : { markingScheme: v.markingScheme }),

@@ -4,10 +4,10 @@ import { useState } from 'react'
 import { Upload, FileDown, Loader2, CheckCircle2, AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
-const HEADERS = 'type,exam,subject,topic,difficulty,year,variant,question,optionA,optionB,optionC,optionD,optionE,correct,marking_scheme,max_marks,explanation,video_url,image,status,source_ref'
+const HEADERS = 'type,exam,subject,topic,difficulty,year,variant,also_exams,question,optionA,optionB,optionC,optionD,optionE,correct,marking_scheme,max_marks,explanation,video_url,image,status,source_ref'
 const SAMPLE = `${HEADERS}
-mcq,JAMB / UTME,English Language,Comprehension,2,2019,A,"The author's main purpose is to...",Inform,Persuade,Entertain,Describe,,B,,1,,,,published,JAMB-2019-ENG-Q1
-mcq,JAMB / UTME,Mathematics,Algebra,2,2019,A,"Solve 2x + 3 = 7",x = 1,x = 2,x = 3,x = 4,,B,,1,"Subtract 3 then divide by 2.",,,published,JAMB-2019-MTH-Q1`
+mcq,JAMB / UTME,English Language,Comprehension,2,2019,A,,"The author's main purpose is to...",Inform,Persuade,Entertain,Describe,,B,,1,,,,published,JAMB-2019-ENG-Q1
+mcq,JAMB / UTME,Mathematics,Algebra,2,2019,A,WASSCE|NECO,"Solve 2x + 3 = 7",x = 1,x = 2,x = 3,x = 4,,B,,1,"Subtract 3 then divide by 2.",,,published,JAMB-2019-MTH-Q1`
 
 interface Result {
   ok?: boolean; total?: number; created?: number; updated?: number; skipped?: number; invalid?: number
