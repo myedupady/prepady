@@ -1,5 +1,6 @@
 import type { Payload, RequiredDataFromCollectionSlug } from 'payload'
 import { shuffle, isCorrectAnswer } from '@/lib/quiz'
+import { examMatch } from '@/lib/exam-match'
 import { sendText, sendList, sendImage, type Row } from '@/lib/whatsapp'
 
 /**
@@ -33,9 +34,10 @@ async function saveSession(payload: Payload, phone: string, name: string | undef
 
 /** Exams that actually have published MCQs, top 10 by question count. */
 async function examsWithContent(payload: Payload): Promise<Array<{ id: number; name: string }>> {
-  const res = await payload.find({ collection: 'questions', where: { and: [{ status: { equals: 'published' } }, { questionType: { equals: 'mcq' } }, { passage: { exists: false } }] }, select: { exam: true }, limit: 8000, depth: 0, overrideAccess: true }).catch(() => ({ docs: [] as Array<{ exam?: number }> }))
+  const res = await payload.find({ collection: 'questions', where: { and: [{ status: { equals: 'published' } }, { questionType: { equals: 'mcq' } }, { passage: { exists: false } }] }, select: { exam: true, extraExams: true }, limit: 8000, depth: 0, overrideAccess: true }).catch(() => ({ docs: [] as Array<{ exam?: number; extraExams?: number[] }> }))
   const tally = new Map<number, number>()
-  for (const d of res.docs) { const id = (d as { exam?: number }).exam; if (typeof id === 'number') tally.set(id, (tally.get(id) ?? 0) + 1) }
+  const bump = (id: unknown) => { if (typeof id === 'number') tally.set(id, (tally.get(id) ?? 0) + 1) }
+  for (const d of res.docs) { bump((d as { exam?: number }).exam); for (const x of (d as { extraExams?: number[] }).extraExams ?? []) bump(x) }
   const top = [...tally.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10).map(([id]) => id)
   if (top.length === 0) return []
   const ex = await payload.find({ collection: 'exams', where: { id: { in: top } }, limit: 10, depth: 0, overrideAccess: true }).catch(() => ({ docs: [] as Array<{ id: number; code?: string }> }))
@@ -44,7 +46,7 @@ async function examsWithContent(payload: Payload): Promise<Array<{ id: number; n
 }
 
 async function subjectsWithContent(payload: Payload, examId: number): Promise<Array<{ id: number; name: string }>> {
-  const res = await payload.find({ collection: 'questions', where: { and: [{ exam: { equals: examId } }, { status: { equals: 'published' } }, { questionType: { equals: 'mcq' } }, { passage: { exists: false } }] }, select: { subject: true }, limit: 8000, depth: 0, overrideAccess: true }).catch(() => ({ docs: [] as Array<{ subject?: number }> }))
+  const res = await payload.find({ collection: 'questions', where: { and: [examMatch(examId), { status: { equals: 'published' } }, { questionType: { equals: 'mcq' } }, { passage: { exists: false } }] }, select: { subject: true }, limit: 8000, depth: 0, overrideAccess: true }).catch(() => ({ docs: [] as Array<{ subject?: number }> }))
   const tally = new Map<number, number>()
   for (const d of res.docs) { const id = (d as { subject?: number }).subject; if (typeof id === 'number') tally.set(id, (tally.get(id) ?? 0) + 1) }
   const top = [...tally.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10).map(([id]) => id)
@@ -100,7 +102,7 @@ export async function handleInbound(payload: Payload, args: { phone: string; nam
     const subjectId = Number(replyId.slice(5))
     const su = await payload.findByID({ collection: 'subjects', id: subjectId, depth: 0, overrideAccess: true }).catch(() => null)
     const subjectName = (su as { name?: string } | null)?.name ?? 'Subject'
-    const pool = await payload.find({ collection: 'questions', where: { and: [{ exam: { equals: data.examId } }, { subject: { equals: subjectId } }, { status: { equals: 'published' } }, { questionType: { equals: 'mcq' } }, { passage: { exists: false } }] }, limit: 50, depth: 0, overrideAccess: true }).catch(() => ({ docs: [] as Array<Record<string, unknown>> }))
+    const pool = await payload.find({ collection: 'questions', where: { and: [examMatch(data.examId as number), { subject: { equals: subjectId } }, { status: { equals: 'published' } }, { questionType: { equals: 'mcq' } }, { passage: { exists: false } }] }, limit: 50, depth: 0, overrideAccess: true }).catch(() => ({ docs: [] as Array<Record<string, unknown>> }))
     const picked = shuffle(pool.docs as Array<Record<string, unknown>>).slice(0, SAMPLE_COUNT)
     if (picked.length === 0) { await sendText(phone, `No questions for ${subjectName} yet. Try another subject, or start free at ${SITE_URL}`); return }
     const queue: QItem[] = picked.map((q) => ({

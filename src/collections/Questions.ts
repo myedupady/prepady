@@ -34,6 +34,17 @@ export const Questions: CollectionConfig = {
       admin: { position: 'sidebar', description: 'Which exam this question belongs to (region is derived from it).' },
     },
     {
+      name: 'extraExams',
+      type: 'relationship',
+      relationTo: 'exams',
+      hasMany: true,
+      label: 'Also appears in',
+      admin: {
+        position: 'sidebar',
+        description: 'Other exam boards this same question also belongs to (e.g. a shared Maths question for WASSCE + NECO). It is served under the main exam AND each of these — create once, appears everywhere.',
+      },
+    },
+    {
       name: 'subject',
       type: 'relationship',
       relationTo: 'subjects',

@@ -2,6 +2,7 @@ import { redirect, notFound } from 'next/navigation'
 import { relName } from '@/lib/utils'
 import { getAuthContext } from '@/lib/auth'
 import { isPremium } from '@/lib/quiz'
+import { examMatch } from '@/lib/exam-match'
 import { QuizRunner } from './QuizRunner'
 import { SubjectPicker, type SubjectGroup } from './SubjectPicker'
 import { PastYearPicker, type YearSubject } from './PastYearPicker'
@@ -67,7 +68,7 @@ export default async function ExamQuizPage({
         collection: 'questions',
         where: {
           and: [
-            { exam: { equals: examId } },
+            examMatch(examId),
             { status: { equals: 'published' } },
             { questionType: { equals: 'mcq' } },
             { passage: { exists: false } },
@@ -163,7 +164,7 @@ export default async function ExamQuizPage({
         collection: 'questions',
         where: {
           and: [
-            { exam: { equals: examId } },
+            examMatch(examId),
             { status: { equals: 'published' } },
             { questionType: { equals: 'mcq' } },
             { passage: { exists: false } }, // comprehension questions live in their own flow
@@ -177,7 +178,7 @@ export default async function ExamQuizPage({
     payload
       .count({
         collection: 'questions',
-        where: { and: [{ exam: { equals: examId } }, { status: { equals: 'published' } }, { questionType: { equals: 'theory' } }] },
+        where: { and: [examMatch(examId), { status: { equals: 'published' } }, { questionType: { equals: 'theory' } }] },
         overrideAccess: true,
       })
       .catch(() => ({ totalDocs: 0 })),

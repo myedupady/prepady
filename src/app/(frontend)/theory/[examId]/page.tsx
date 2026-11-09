@@ -1,5 +1,6 @@
 import { redirect, notFound } from 'next/navigation'
 import { isPremium } from '@/lib/quiz'
+import { examMatch } from '@/lib/exam-match'
 import { relName } from '@/lib/utils'
 import { getAuthContext } from '@/lib/auth'
 import { TheoryRunner, type TheoryQuestion } from './TheoryRunner'
@@ -28,7 +29,7 @@ export default async function TheoryPracticePage({ params }: { params: Promise<{
       collection: 'questions',
       where: {
         and: [
-          { exam: { equals: examId } },
+          examMatch(examId),
           { status: { equals: 'published' } },
           { questionType: { equals: 'theory' } },
         ],

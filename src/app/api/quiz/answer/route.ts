@@ -4,6 +4,7 @@ import type { RequiredDataFromCollectionSlug, Where } from 'payload'
 import configPromise from '@payload-config'
 import { shuffle, sanitiseQuestion, updateDifficulty, isCorrectAnswer, type Difficulty } from '@/lib/quiz'
 import { relName } from '@/lib/utils'
+import { examMatch } from '@/lib/exam-match'
 
 /**
  * POST /api/quiz/answer  Body: { sessionId, questionId, givenAnswer }
@@ -99,7 +100,7 @@ export async function POST(req: NextRequest) {
           collection: 'questions',
           where: {
             and: [
-              { exam: { equals: session.exam } },
+              examMatch(session.exam as number | string),
               { status: { equals: 'published' } },
               { questionType: { equals: 'mcq' } },
               { difficulty: { equals: String(diff) } },
@@ -128,7 +129,7 @@ export async function POST(req: NextRequest) {
           collection: 'questions',
           where: {
             and: [
-              { exam: { equals: session.exam } },
+              examMatch(session.exam as number | string),
               { status: { equals: 'published' } },
               { questionType: { equals: 'mcq' } },
               { passage: { exists: false } },

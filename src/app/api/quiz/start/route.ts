@@ -3,6 +3,7 @@ import { getPayload } from 'payload'
 import type { RequiredDataFromCollectionSlug, Where } from 'payload'
 import configPromise from '@payload-config'
 import { shuffle, sanitiseQuestion, isPremium } from '@/lib/quiz'
+import { examMatch } from '@/lib/exam-match'
 
 const FREE_PRACTICE_QUESTIONS = 10
 const FREE_MOCK_QUESTIONS = 20
@@ -56,7 +57,7 @@ export async function POST(req: NextRequest) {
     }
 
     const baseClauses: Where[] = [
-      { exam: { equals: examId } },
+      examMatch(examId),
       { status: { equals: 'published' } },
       { questionType: { equals: 'mcq' } },
       { passage: { exists: false } }, // comprehension questions are served via the passage flow

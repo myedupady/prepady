@@ -14,15 +14,18 @@ export default async function QuizHub() {
   const [regionsRes, examsRes, qRes] = await Promise.all([
     payload.find({ collection: 'regions', sort: 'order', limit: 100, depth: 0 }),
     payload.find({ collection: 'exams', where: { status: { equals: 'active' } }, sort: 'order', limit: 1000, depth: 0 }),
-    payload.find({ collection: 'questions', where: { status: { equals: 'published' } }, select: { exam: true }, limit: 20000, depth: 0, overrideAccess: true }).catch(() => ({ docs: [] as Array<{ exam?: number }> })),
+    payload.find({ collection: 'questions', where: { status: { equals: 'published' } }, select: { exam: true, extraExams: true }, limit: 20000, depth: 0, overrideAccess: true }).catch(() => ({ docs: [] as Array<{ exam?: number; extraExams?: number[] }> })),
   ])
   const exams = examsRes.docs as Array<{ id: number; code: string; region: number }>
   const regions = regionsRes.docs as Array<{ id: number; name: string; color: string }>
 
-  // Published-question count per exam (so it's clear which exams have content).
+  // Published-question count per exam (incl. multi-board questions), so it's
+  // clear which exams have content.
   const countByExam = new Map<number, number>()
-  for (const q of qRes.docs as Array<{ exam?: number }>) {
-    if (typeof q.exam === 'number') countByExam.set(q.exam, (countByExam.get(q.exam) ?? 0) + 1)
+  const bump = (id: unknown) => { if (typeof id === 'number') countByExam.set(id, (countByExam.get(id) ?? 0) + 1) }
+  for (const q of qRes.docs as Array<{ exam?: number; extraExams?: number[] }>) {
+    bump(q.exam)
+    for (const x of q.extraExams ?? []) bump(x)
   }
   // Show exams with content first within each region.
   exams.sort((a, b) => (countByExam.get(b.id) ?? 0) - (countByExam.get(a.id) ?? 0))

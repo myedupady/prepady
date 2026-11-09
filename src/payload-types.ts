@@ -455,6 +455,10 @@ export interface Question {
    * Which exam this question belongs to (region is derived from it).
    */
   exam: number | Exam;
+  /**
+   * Other exam boards this same question also belongs to (e.g. a shared Maths question for WASSCE + NECO). It is served under the main exam AND each of these — create once, appears everywhere.
+   */
+  extraExams?: (number | Exam)[] | null;
   subject: number | Subject;
   /**
    * Pick or create a Topic (under the matching Subject), e.g. "Quadratic Equations". Used for gap detection.
@@ -1023,6 +1027,7 @@ export interface PassagesSelect<T extends boolean = true> {
  */
 export interface QuestionsSelect<T extends boolean = true> {
   exam?: T;
+  extraExams?: T;
   subject?: T;
   topicRef?: T;
   passage?: T;
