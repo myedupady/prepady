@@ -40,7 +40,9 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const userId = user.id
   const sp = await searchParams
   const range: Range = sp.range === 'week' || sp.range === 'month' || sp.range === 'year' ? sp.range : 'all'
-  const subjectFilter = sp.subject && /^\d+$/.test(sp.subject) ? sp.subject : null
+  // Subject filter is by NAME (from the answer log) so it works for mixed/all-
+  // subjects sessions too, not just single-subject ones.
+  const subjectFilter = sp.subject ? sp.subject.trim() : null
   const since = rangeStart(range)
 
   const sessionsRes = await payload
@@ -48,30 +50,37 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     .catch(() => ({ docs: [] as Session[] }))
   const allSessions = sessionsRes.docs as Session[]
 
-  // Subjects the student has practised (for the trend filter pills).
-  const subjOptions = new Map<string, string>()
-  for (const s of allSessions) {
-    const subj = s.subject
-    if (subj && typeof subj === 'object' && subj.id) subjOptions.set(String(subj.id), subj.name ?? `Subject ${subj.id}`)
-  }
-
   // Apply the timeframe filter to everything shown below.
-  const subjId = (s: Session) => (s.subject && typeof s.subject === 'object' ? String(s.subject.id ?? '') : s.subject != null ? String(s.subject) : '')
   const sessions = allSessions.filter((s) => {
     if (since) { const t = s.completedAt || s.startedAt; if (!t || new Date(t) < since) return false }
     return true
   })
   const completedAll = sessions.filter((s) => s.status === 'completed')
-  // The trend/average also honour the subject filter (so it doesn't get long).
-  const completed = subjectFilter ? completedAll.filter((s) => subjId(s) === subjectFilter) : completedAll
-  const avg = completed.length ? Math.round(completed.reduce((a, s) => a + pctOf(s), 0) / completed.length) : 0
-  const trend = [...completed].reverse().map(pctOf).slice(-12)
+
+  // Subjects the student has practised (for the filter pills) — from the answer log.
+  const subjectNames = new Set<string>()
+  for (const s of sessions) for (const a of s.answers ?? []) if (a.subjectName) subjectNames.add(a.subjectName)
+
+  // A session's score for the trend — subject-specific when a subject is selected.
+  const sessionPct = (s: Session): number | null => {
+    if (!subjectFilter) return pctOf(s)
+    const ans = (s.answers ?? []).filter((a) => a.subjectName === subjectFilter)
+    if (!ans.length) return null
+    return Math.round((ans.filter((a) => a.isCorrect).length / ans.length) * 100)
+  }
+  const completed = subjectFilter
+    ? completedAll.filter((s) => (s.answers ?? []).some((a) => a.subjectName === subjectFilter))
+    : completedAll
+  const trendVals = [...completed].reverse().map(sessionPct).filter((v): v is number => v != null)
+  const avg = trendVals.length ? Math.round(trendVals.reduce((a, b) => a + b, 0) / trendVals.length) : 0
+  const trend = trendVals.slice(-12)
 
   // Per-subject + per-topic accuracy from the answer log.
   const subj = new Map<string, { c: number; t: number }>()
   const topic = new Map<string, { c: number; t: number }>()
   for (const s of sessions) {
     for (const a of s.answers ?? []) {
+      if (subjectFilter && a.subjectName !== subjectFilter) continue
       if (a.subjectName) {
         const m = subj.get(a.subjectName) ?? { c: 0, t: 0 }
         m.t++
@@ -150,8 +159,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     { label: 'Plan', value: premium ? 'Premium' : 'Free', icon: Trophy },
   ]
 
-  // Trend filter links (preserve the other param).
-  const subjOpts = [...subjOptions.entries()].sort((a, b) => a[1].localeCompare(b[1]))
+  // Trend filter links (preserve the other param). Subject is a name.
+  const subjOpts = [...subjectNames].sort((a, b) => a.localeCompare(b))
   const trendQs = (over: { range?: Range; subject?: string | undefined }) => {
     const p = new URLSearchParams()
     const r = over.range ?? range
@@ -287,8 +296,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           {subjOpts.length > 0 && (
             <div className="flex gap-2 overflow-x-auto pb-1">
               <Link href={trendQs({ subject: undefined })} className={fpill(!subjectFilter)}>All subjects</Link>
-              {subjOpts.map(([id, name]) => (
-                <Link key={id} href={trendQs({ subject: id })} className={fpill(subjectFilter === id)}>{name}</Link>
+              {subjOpts.map((name) => (
+                <Link key={name} href={trendQs({ subject: name })} className={fpill(subjectFilter === name)}>{name}</Link>
               ))}
             </div>
           )}
