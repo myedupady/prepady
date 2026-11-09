@@ -10,7 +10,7 @@ export const REFERRAL_REWARD_DAYS = 7
  */
 export async function grantPremiumDays(
   payload: Payload,
-  args: { userId: number | string; days: number; customerCode?: string },
+  args: { userId: number | string; days: number; customerCode?: string; plan?: 'premium' | 'premium-plus' },
 ): Promise<boolean> {
   if (!args.days || args.days <= 0) return false
   const user = await payload
@@ -22,12 +22,18 @@ export async function grantPremiumDays(
   const base = existing && new Date(existing).getTime() > Date.now() ? new Date(existing).getTime() : Date.now()
   const expiresAt = new Date(base + args.days * 24 * 60 * 60 * 1000).toISOString()
 
+  // Don't downgrade a current Premium Plus user to Premium (e.g. via a referral
+  // bonus that defaults to 'premium') while their Plus sub is still active.
+  const current = (user as { plan?: string }).plan
+  const stillPlus = current === 'premium-plus' && existing && new Date(existing).getTime() > Date.now()
+  const plan = args.plan ?? (stillPlus ? 'premium-plus' : 'premium')
+
   await payload.update({
     collection: 'users',
     id: args.userId,
     overrideAccess: true,
     data: {
-      plan: 'premium',
+      plan,
       subscriptionExpiresAt: expiresAt,
       ...(args.customerCode ? { paystackCustomerCode: args.customerCode } : {}),
     } as Record<string, unknown>,
@@ -45,5 +51,5 @@ export async function grantPremium(
 ): Promise<boolean> {
   const plan = getPlan(args.planId)
   if (!plan) return false
-  return grantPremiumDays(payload, { userId: args.userId, days: plan.days, customerCode: args.customerCode })
+  return grantPremiumDays(payload, { userId: args.userId, days: plan.days, customerCode: args.customerCode, plan: plan.tier })
 }

@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
  * Starts a Paystack checkout for a plan and redirects to the payment page.
  * Disabled + spinner while in flight so it can't be double-clicked.
  */
-export function UpgradeButton({ planId, label, disabled }: { planId: string; label: string; disabled?: boolean }) {
+export function UpgradeButton({ planId, label, disabled, accent = false }: { planId: string; label: string; disabled?: boolean; accent?: boolean }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -39,7 +39,7 @@ export function UpgradeButton({ planId, label, disabled }: { planId: string; lab
 
   return (
     <div>
-      <Button onClick={pay} disabled={loading || disabled} variant="accent" className="w-full rounded-xl font-black h-12">
+      <Button onClick={pay} disabled={loading || disabled} variant={accent ? 'accent' : 'outline'} className="w-full rounded-xl font-black h-11">
         {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <>{disabled ? <Lock className="w-4 h-4" /> : null} {label}</>}
       </Button>
       {error && <p className="text-xs text-destructive font-medium mt-2 text-center">{error}</p>}

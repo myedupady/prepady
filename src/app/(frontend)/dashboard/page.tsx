@@ -4,7 +4,8 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getAuthContext } from '@/lib/auth'
 import { relName } from '@/lib/utils'
-import { Target, Trophy, CheckCircle2, ArrowRight, Sparkles, Globe2, TrendingUp, Gauge, BarChart3, ShieldCheck, Clapperboard, Handshake, Receipt, Flame, CheckCircle, PlayCircle, Rocket } from 'lucide-react'
+import { isPremium, isPremiumPlus } from '@/lib/quiz'
+import { Target, Trophy, CheckCircle2, ArrowRight, Sparkles, Globe2, TrendingUp, Gauge, BarChart3, ShieldCheck, Clapperboard, Handshake, Receipt, Flame, CheckCircle, PlayCircle, Rocket, Camera } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { LogoutButton } from '@/components/LogoutButton'
@@ -143,9 +144,11 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       ? { title: `Continue ${lastExamName ?? 'your exam'}`, sub: 'Pick up where you left off with a quick adaptive round.', href: `/quiz/${lastExamId}?all=1`, videoId: undefined as number | undefined }
       : { title: 'Start your first quiz', sub: 'Choose an exam and answer a few questions — your progress appears here.', href: '/quiz', videoId: undefined as number | undefined }
 
-  const u = user as { name?: string; email?: string; plan?: string; role?: string; referralCode?: string; referralCount?: number }
+  const u = user as { name?: string; email?: string; plan?: string; subscriptionExpiresAt?: string; role?: string; referralCode?: string; referralCount?: number }
   const firstName = u.name?.split(' ')[0] ?? 'there'
-  const premium = u.plan === 'premium'
+  const premium = isPremium(u)
+  const plus = isPremiumPlus(u)
+  const planLabel = plus ? 'Premium Plus' : premium ? 'Premium' : 'Free'
   const isAdmin = u.role === 'admin'
   // Is this user a B2B partner (has a linked partner profile)?
   const partnerCount = await payload
@@ -156,7 +159,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const stats = [
     { label: 'Quizzes completed', value: String(completedAll.length), icon: CheckCircle2 },
     { label: 'Questions answered', value: String(totalAnswered), icon: Target },
-    { label: 'Plan', value: premium ? 'Premium' : 'Free', icon: Trophy },
+    { label: 'Plan', value: planLabel, icon: Trophy },
   ]
 
   // Trend filter links (preserve the other param). Subject is a name.
@@ -182,7 +185,10 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             Prepady<span className="text-gold-500">.</span>
           </Link>
           <div className="flex items-center gap-4">
-            <Link href="/learn" className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-ink-900">
+            <Link href="/snap" className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-ink-900">
+              <Camera className="w-4 h-4" /> Snap &amp; Solve
+            </Link>
+            <Link href="/learn" className="hidden sm:inline-flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-ink-900">
               <Clapperboard className="w-4 h-4" /> Lessons
             </Link>
             <Link href="/leaderboard" className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-ink-900">
@@ -214,7 +220,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             <p className="text-muted-foreground text-sm mt-1">{u.email}</p>
           </div>
           <span className={`inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-widest px-3 py-1.5 rounded-full ${premium ? 'bg-gold-100 text-gold-800' : 'bg-secondary text-secondary-foreground'}`}>
-            <Sparkles className="w-3.5 h-3.5" /> {premium ? 'Premium' : 'Free plan'}
+            <Sparkles className="w-3.5 h-3.5" /> {premium ? planLabel : 'Free plan'}
           </span>
         </div>
 

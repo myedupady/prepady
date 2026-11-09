@@ -4,8 +4,8 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Check, Sparkles } from 'lucide-react'
 import { getAuthContext } from '@/lib/auth'
-import { isPremium } from '@/lib/quiz'
-import { PLANS, PREMIUM_PERKS, FREE_PERKS, formatNgn } from '@/lib/plans'
+import { isPremium, isPremiumPlus } from '@/lib/quiz'
+import { PLANS, PREMIUM_PERKS, PREMIUM_PLUS_PERKS, FREE_PERKS, formatNgn } from '@/lib/plans'
 import { isPaystackConfigured } from '@/lib/paystack'
 import { Card, CardContent } from '@/components/ui/card'
 import { UpgradeButton } from './UpgradeButton'
@@ -17,7 +17,10 @@ export default async function UpgradePage() {
   const { user } = await getAuthContext()
   if (!user) redirect('/login?redirect=/upgrade')
   const premium = isPremium(user as { plan?: string; subscriptionExpiresAt?: string })
+  const plus = isPremiumPlus(user as { plan?: string; subscriptionExpiresAt?: string })
   const expiresAt = (user as { subscriptionExpiresAt?: string }).subscriptionExpiresAt
+  const premiumPlans = Object.values(PLANS).filter((p) => p.tier === 'premium')
+  const plusPlans = Object.values(PLANS).filter((p) => p.tier === 'premium-plus')
 
   return (
     <main className="min-h-screen bg-background">
@@ -38,46 +41,59 @@ export default async function UpgradePage() {
 
         {premium && (
           <div className="mb-6 rounded-2xl bg-gold-50 border border-gold-200 p-4 text-sm text-ink-900 flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-gold-600" /> You’re on <b>Premium</b>
-            {expiresAt ? <> — active until {new Date(expiresAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}. Renew any time below.</> : '.'}
+            <Sparkles className="w-4 h-4 text-gold-600" /> You’re on <b>{plus ? 'Premium Plus' : 'Premium'}</b>
+            {expiresAt ? <> — active until {new Date(expiresAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}. Renew or change below.</> : '.'}
           </div>
         )}
 
-        <div className="grid md:grid-cols-3 gap-4">
-          {/* Free */}
+        <div className="grid md:grid-cols-2 gap-5">
+          {/* Premium */}
           <Card className="border border-border bg-card">
             <CardContent className="p-6">
-              <p className="font-black text-ink-900 mb-1">Free</p>
-              <p className="font-display text-2xl font-extrabold text-ink-900 mb-4">₦0</p>
+              <p className="font-black text-ink-900 text-lg mb-1">Premium</p>
+              <p className="text-xs text-muted-foreground mb-4">From {formatNgn(premiumPlans[0].priceNgn)}/month</p>
               <ul className="space-y-2 mb-6">
-                {FREE_PERKS.map((p) => (
-                  <li key={p} className="flex items-start gap-2 text-sm text-ink-900"><Check className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" /> {p}</li>
+                {PREMIUM_PERKS.map((p) => (
+                  <li key={p} className="flex items-start gap-2 text-sm text-ink-900"><Check className="w-4 h-4 text-gold-600 mt-0.5 shrink-0" /> {p}</li>
                 ))}
               </ul>
-              <div className="h-12 flex items-center justify-center text-sm font-semibold text-muted-foreground">Current base plan</div>
+              <div className="space-y-2">
+                {premiumPlans.map((plan) => (
+                  <UpgradeButton key={plan.id} planId={plan.id} label={`${plan.name.replace('Premium — ', '')} · ${formatNgn(plan.priceNgn)}`} disabled={!isPaystackConfigured} />
+                ))}
+              </div>
             </CardContent>
           </Card>
 
-          {/* Premium plans */}
-          {Object.values(PLANS).map((plan, i) => (
-            <Card key={plan.id} className={`border bg-card ${i === 1 ? 'border-gold-300 shadow-brand' : 'border-border'}`}>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-1">
-                  <p className="font-black text-ink-900">{plan.name.replace('Premium — ', '')}</p>
-                  {i === 1 && <span className="text-[10px] font-black uppercase tracking-widest bg-gold-100 text-gold-800 px-2 py-0.5 rounded-full">Best value</span>}
-                </div>
-                <p className="font-display text-2xl font-extrabold text-ink-900">{formatNgn(plan.priceNgn)}</p>
-                <p className="text-xs text-muted-foreground mb-4">{plan.blurb}</p>
-                <ul className="space-y-2 mb-6">
-                  {PREMIUM_PERKS.map((p) => (
-                    <li key={p} className="flex items-start gap-2 text-sm text-ink-900"><Check className="w-4 h-4 text-gold-600 mt-0.5 shrink-0" /> {p}</li>
-                  ))}
-                </ul>
-                <UpgradeButton planId={plan.id} label={premium ? 'Renew / extend' : `Pay ${formatNgn(plan.priceNgn)}`} disabled={!isPaystackConfigured} />
-              </CardContent>
-            </Card>
-          ))}
+          {/* Premium Plus */}
+          <Card className="border-2 border-gold-300 bg-card shadow-brand relative">
+            <span className="absolute top-4 right-4 text-[10px] font-black uppercase tracking-widest bg-ink-900 text-gold-400 px-2 py-0.5 rounded-full">Most powerful</span>
+            <CardContent className="p-6">
+              <p className="flex items-center gap-1.5 font-black text-ink-900 text-lg mb-1"><Sparkles className="w-4 h-4 text-gold-600" /> Premium Plus</p>
+              <p className="text-xs text-muted-foreground mb-4">From {formatNgn(plusPlans[0].priceNgn)}/month</p>
+              <ul className="space-y-2 mb-6">
+                {PREMIUM_PLUS_PERKS.map((p) => (
+                  <li key={p} className="flex items-start gap-2 text-sm text-ink-900"><Check className="w-4 h-4 text-gold-600 mt-0.5 shrink-0" /> {p}</li>
+                ))}
+              </ul>
+              <div className="space-y-2">
+                {plusPlans.map((plan) => (
+                  <UpgradeButton key={plan.id} planId={plan.id} label={`${plan.name.replace('Premium Plus — ', '')} · ${formatNgn(plan.priceNgn)}`} disabled={!isPaystackConfigured} accent />
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         </div>
+
+        {/* Free (reference) */}
+        <Card className="border border-border bg-card mt-5">
+          <CardContent className="p-5 flex flex-wrap items-center gap-x-6 gap-y-1">
+            <p className="font-black text-ink-900">Free · ₦0</p>
+            {FREE_PERKS.map((p) => (
+              <span key={p} className="flex items-center gap-1.5 text-xs text-muted-foreground"><Check className="w-3.5 h-3.5 text-muted-foreground" /> {p}</span>
+            ))}
+          </CardContent>
+        </Card>
 
         {!isPaystackConfigured && (
           <p className="text-xs text-muted-foreground mt-6 text-center">Payments are being set up — check back shortly.</p>

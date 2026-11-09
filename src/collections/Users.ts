@@ -112,11 +112,12 @@ export const Users: CollectionConfig = {
       options: [
         { label: 'Free', value: 'free' },
         { label: 'Premium', value: 'premium' },
+        { label: 'Premium Plus', value: 'premium-plus' },
       ],
       access: { update: ({ req }) => req.user?.role === 'admin' },
       admin: {
         position: 'sidebar',
-        description: 'Premium unlocks unlimited AI explanations, full CBT mocks, and essay marking.',
+        description: 'Premium unlocks unlimited AI help, full mocks and marking. Premium Plus adds Snap & Solve and Voice Ask.',
       },
     },
     {
@@ -168,6 +169,23 @@ export const Users: CollectionConfig = {
       access: { update: ({ req }) => req.user?.role === 'admin' },
       admin: { position: 'sidebar', readOnly: true },
     },
+    // ── Premium Plus daily metering (Snap & Solve / Voice Ask) ──────────────
+    {
+      name: 'snapUsesToday',
+      type: 'number',
+      defaultValue: 0,
+      access: { update: ({ req }) => req.user?.role === 'admin' },
+      admin: { position: 'sidebar', description: 'Snap & Solve uses today (Premium Plus). Resets daily.' },
+    },
+    { name: 'snapUsesResetAt', type: 'date', access: { update: ({ req }) => req.user?.role === 'admin' }, admin: { position: 'sidebar', readOnly: true } },
+    {
+      name: 'voiceUsesToday',
+      type: 'number',
+      defaultValue: 0,
+      access: { update: ({ req }) => req.user?.role === 'admin' },
+      admin: { position: 'sidebar', description: 'Voice Ask uses today (Premium Plus). Resets daily.' },
+    },
+    { name: 'voiceUsesResetAt', type: 'date', access: { update: ({ req }) => req.user?.role === 'admin' }, admin: { position: 'sidebar', readOnly: true } },
     // ── Referrals ─────────────────────────────────────────────────────────────
     {
       name: 'referralCode',

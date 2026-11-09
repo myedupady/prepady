@@ -45,14 +45,27 @@ export function isCorrectAnswer(given: string, correct: string): boolean {
  * Whether a user currently has premium access (active plan + unexpired sub).
  * Free users fall back to the metered daily AI limit.
  */
-export function isPremium(user: {
-  plan?: string | null
-  subscriptionExpiresAt?: string | null
-}): boolean {
-  if (user.plan !== 'premium') return false
+type PlanUser = { plan?: string | null; subscriptionExpiresAt?: string | null }
+
+/** Whether the user's paid subscription is currently active (unexpired). */
+function subActive(user: PlanUser): boolean {
   if (!user.subscriptionExpiresAt) return true
   return new Date(user.subscriptionExpiresAt).getTime() > Date.now()
 }
+
+export function isPremium(user: PlanUser): boolean {
+  if (user.plan !== 'premium' && user.plan !== 'premium-plus') return false
+  return subActive(user)
+}
+
+/** Premium Plus = Snap & Solve + Voice Ask (a tier above Premium). */
+export function isPremiumPlus(user: PlanUser): boolean {
+  if (user.plan !== 'premium-plus') return false
+  return subActive(user)
+}
+
+/** Daily caps for Premium Plus AI features (generous — guards abuse, not use). */
+export const PREMIUM_PLUS_DAILY_LIMIT = 30
 
 /** Free-tier daily allowance for live AI follow-ups (stored explanations are always free). */
 export const FREE_DAILY_AI_LIMIT = 5

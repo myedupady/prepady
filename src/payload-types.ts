@@ -156,9 +156,9 @@ export interface User {
   name: string;
   role: 'student' | 'editor' | 'admin';
   /**
-   * Premium unlocks unlimited AI explanations, full CBT mocks, and essay marking.
+   * Premium unlocks unlimited AI help, full mocks and marking. Premium Plus adds Snap & Solve and Voice Ask.
    */
-  plan?: ('free' | 'premium') | null;
+  plan?: ('free' | 'premium' | 'premium-plus') | null;
   /**
    * When the current premium subscription lapses. Set by the Paystack webhook.
    */
@@ -174,6 +174,16 @@ export interface User {
    */
   markUsesToday?: number | null;
   markUsesResetAt?: string | null;
+  /**
+   * Snap & Solve uses today (Premium Plus). Resets daily.
+   */
+  snapUsesToday?: number | null;
+  snapUsesResetAt?: string | null;
+  /**
+   * Voice Ask uses today (Premium Plus). Resets daily.
+   */
+  voiceUsesToday?: number | null;
+  voiceUsesResetAt?: string | null;
   /**
    * The user’s own code to share.
    */
@@ -912,6 +922,10 @@ export interface UsersSelect<T extends boolean = true> {
   aiUsesResetAt?: T;
   markUsesToday?: T;
   markUsesResetAt?: T;
+  snapUsesToday?: T;
+  snapUsesResetAt?: T;
+  voiceUsesToday?: T;
+  voiceUsesResetAt?: T;
   referralCode?: T;
   referredBy?: T;
   referralCount?: T;
